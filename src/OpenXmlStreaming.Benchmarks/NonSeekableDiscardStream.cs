@@ -1,5 +1,3 @@
-namespace OpenXmlStreaming.Benchmarks;
-
 /// <summary>
 /// A write-only, non-seekable sink that discards everything written to it.
 /// Used to isolate the cost of *producing* a package for a non-seekable
@@ -10,7 +8,7 @@ namespace OpenXmlStreaming.Benchmarks;
 /// path cannot write to this directly, forcing callers to buffer into a
 /// <see cref="MemoryStream"/> first. The streaming writer can target it directly.
 /// </summary>
-internal sealed class NonSeekableDiscardStream : Stream
+class NonSeekableDiscardStream : Stream
 {
     long length;
 

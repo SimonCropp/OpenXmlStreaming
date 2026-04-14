@@ -9,6 +9,14 @@ public sealed class OpenXmlPackageWriter :
     IAsyncDisposable,
     IDisposable
 {
+    /// <summary>
+    /// Default size of the internal write buffer placed between <see cref="ZipArchive"/>
+    /// and the caller-supplied target stream. Matches <see cref="Stream.CopyTo(Stream)"/>'s
+    /// default copy-buffer size.
+    /// </summary>
+    public const int DefaultBufferSize = 81920;
+
+    readonly BufferedWriteStream? bufferedStream;
     readonly ZipArchive archive;
     readonly List<(Uri PartUri, string ContentType)> contentTypes = [];
     readonly List<(string Id, Uri TargetUri, string RelationshipType, TargetMode TargetMode)> packageRelationships = [];
@@ -22,14 +30,31 @@ public sealed class OpenXmlPackageWriter :
     /// </summary>
     /// <param name="stream">Target stream (write-only is sufficient).</param>
     /// <param name="leaveOpen">Whether to leave the stream open after disposal.</param>
-    public OpenXmlPackageWriter(Stream stream, bool leaveOpen = false)
+    /// <param name="bufferSize">
+    /// Size of the internal write buffer placed between <see cref="ZipArchive"/> and
+    /// the target stream. Defaults to <see cref="DefaultBufferSize"/> (80 KB). Pass
+    /// <c>0</c> to disable buffering and write directly to the target stream — this
+    /// also disables async flushing on <see cref="DisposeAsync"/>, which would
+    /// otherwise asynchronously push the final buffer contents to the target.
+    /// Larger buffers reduce the number of writes that reach the target, which
+    /// matters most for remote sinks like SQL BLOB streams or cloud upload streams.
+    /// </param>
+    public OpenXmlPackageWriter(Stream stream, bool leaveOpen = false, int bufferSize = DefaultBufferSize)
     {
         if (stream is null)
         {
             throw new ArgumentNullException(nameof(stream));
         }
 
-        archive = new(stream, ZipArchiveMode.Create, leaveOpen);
+        if (bufferSize > 0)
+        {
+            bufferedStream = new(stream, bufferSize, leaveOpen);
+            archive = new(bufferedStream, ZipArchiveMode.Create, leaveOpen: true);
+        }
+        else
+        {
+            archive = new(stream, ZipArchiveMode.Create, leaveOpen);
+        }
     }
 
     /// <summary>
@@ -126,11 +151,11 @@ public sealed class OpenXmlPackageWriter :
     }
 
     /// <summary>
-    /// Finalizes the package by writing _rels/.rels and [Content_Types].xml.
-    /// Called automatically by Dispose, but can be called explicitly.
-    /// After this call, no more parts can be added.
+    /// Writes _rels/.rels and [Content_Types].xml into the ZIP. Called by
+    /// <see cref="Dispose"/> and <see cref="DisposeAsync"/>; does not itself
+    /// write the ZIP central directory (the archive must be disposed for that).
     /// </summary>
-    public void Finish()
+    internal void Finish()
     {
         if (finished)
         {
@@ -153,18 +178,50 @@ public sealed class OpenXmlPackageWriter :
     {
         Finish();
         archive.Dispose();
+        bufferedStream?.Dispose();
     }
 
-#if NET6_0_OR_GREATER
     /// <summary>
     /// Asynchronously disposes the writer, finalizing the package if not already done.
+    /// When an internal write buffer is in use (the default), the final buffer contents
+    /// — which include the ZIP central directory — are flushed to the target stream
+    /// via <see cref="Stream.WriteAsync(ReadOnlyMemory{byte}, CancellationToken)"/>,
+    /// so the calling thread is not blocked on network I/O during the final flush.
     /// </summary>
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        Dispose();
-        return default;
+        Finish();
+        await archive.DisposeAsync();
+
+        if (bufferedStream is not null)
+        {
+            await bufferedStream.DisposeAsync();
+        }
     }
-#endif
+
+    /// <summary>
+    /// Asynchronously flushes any bytes currently sitting in the internal write
+    /// buffer to the target stream via
+    /// <see cref="Stream.WriteAsync(ReadOnlyMemory{byte}, CancellationToken)"/>.
+    /// Useful between <see cref="WritePart"/> calls to push accumulated bytes to
+    /// a remote sink at part boundaries. A no-op when the writer is unbuffered
+    /// (<c>bufferSize: 0</c>) or the buffer is empty.
+    /// </summary>
+    /// <remarks>
+    /// This does not eliminate intermediate sync writes that occur when a single
+    /// <see cref="WritePart"/> call produces more bytes than the buffer can hold
+    /// — those spill synchronously during serialization regardless. Use a larger
+    /// buffer if you need to avoid that.
+    /// </remarks>
+    public Task FlushAsync(Cancel cancel = default)
+    {
+        if (bufferedStream is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return bufferedStream.FlushAsync(cancel);
+    }
 
     void WritePackageRelationships()
     {
@@ -234,12 +291,12 @@ public sealed class OpenXmlPackageWriter :
         writer.WriteAttributeString("ContentType", "application/xml");
         writer.WriteEndElement();
 
-        foreach (var ct in contentTypes)
+        foreach (var (partUri, contentType) in contentTypes)
         {
             writer.WriteStartElement("Override");
-            var partName = ct.PartUri.OriginalString;
+            var partName = partUri.OriginalString;
             writer.WriteAttributeString("PartName", partName.Length > 0 && partName[0] == '/' ? partName : "/" + partName);
-            writer.WriteAttributeString("ContentType", ct.ContentType);
+            writer.WriteAttributeString("ContentType", contentType);
             writer.WriteEndElement();
         }
 

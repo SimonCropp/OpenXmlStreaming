@@ -82,12 +82,13 @@ public class Samples
             new("/xl/workbook.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
             new S.Workbook(
-                new S.Sheets(new S.Sheet
-                {
-                    Name = "Sheet1",
-                    SheetId = 1,
-                    Id = "rId1"
-                })),
+                new S.Sheets(
+                    new S.Sheet
+                    {
+                        Name = "Sheet1",
+                        SheetId = 1,
+                        Id = "rId1"
+                    })),
             [
                 new(
                     new("worksheets/sheet1.xml", UriKind.Relative),
@@ -170,10 +171,92 @@ public class Samples
         var relationship = new PartRelationship(
             targetUri: new("styles.xml", UriKind.Relative),
             relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-            targetMode: TargetMode.Internal, // default
-            id: "rId1"); // optional, auto-generated if null
+            // default
+            targetMode: TargetMode.Internal,
+            // optional, auto-generated if null
+            id: "rId1");
         // end-snippet
 
         _ = relationship;
+    }
+
+    [Test]
+    public async Task AsyncUsage()
+    {
+        using var stream = new MemoryStream();
+
+        // begin-snippet: async-usage
+        await using var writer = StreamingDocument.CreateWord(
+            stream,
+            WordprocessingDocumentType.Document,
+            leaveOpen: true);
+
+        writer.WritePart(
+            new("/word/document.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+            new Document(new Body(new Paragraph(new Run(new Text("Streamed async!"))))));
+
+        // DisposeAsync (triggered by `await using`) asynchronously flushes
+        // the final buffer — including the ZIP central directory — so remote
+        // sinks like SQL BLOB streams don't block the thread on network I/O.
+        // end-snippet
+    }
+
+    [Test]
+    public void CustomBufferSize()
+    {
+        using var stream = new MemoryStream();
+
+        // begin-snippet: custom-buffer-size
+        // Bigger buffer = fewer, larger writes hit the sink — good for
+        // remote streams where per-write overhead is high. Pass 0 to
+        // disable buffering entirely and write straight to the sink.
+        using var writer = new OpenXmlPackageWriter(
+            stream,
+            leaveOpen: true,
+            // 1 MB
+            bufferSize: 1024 * 1024);
+        // end-snippet
+    }
+
+    [Test]
+    public async Task FlushBetweenParts()
+    {
+        using var stream = new MemoryStream();
+
+        await using var writer = StreamingDocument.CreateSpreadsheet(
+            stream,
+            SpreadsheetDocumentType.Workbook,
+            leaveOpen: true);
+
+        // begin-snippet: flush-async
+        // Write the worksheet, then push its bytes to the target stream
+        // asynchronously before moving on to the next part. Useful at part
+        // boundaries against remote sinks — the thread isn't blocked on
+        // network I/O while the next part is being serialized.
+        writer.WritePart(
+            new("/xl/worksheets/sheet1.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
+            new S.Worksheet(new S.SheetData()));
+
+        await writer.FlushAsync();
+
+        writer.WritePart(
+            new("/xl/workbook.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
+            new S.Workbook(
+                new S.Sheets(new S.Sheet
+                {
+                    Name = "Sheet1",
+                    SheetId = 1,
+                    Id = "rId1"
+                })),
+            [
+                new(
+                    new("worksheets/sheet1.xml", UriKind.Relative),
+                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+                    id: "rId1"),
+            ]);
+        // end-snippet
     }
 }

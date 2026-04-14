@@ -1,12 +1,10 @@
-namespace OpenXmlStreaming.Benchmarks;
-
 /// <summary>
 /// A stream implementation used for benchmarking that doesn't actually store
 /// any data. Reports CanSeek=true so the standard OpenXml SDK path (which
 /// requires a seekable stream) can operate against it, but discards all writes
 /// to isolate the benchmark from file or memory-copy overhead.
 /// </summary>
-internal sealed class NonwritingStream : Stream
+class NonwritingStream : Stream
 {
     long length;
 

@@ -66,7 +66,7 @@ using var spreadsheet = StreamingDocument.CreateSpreadsheet(
 using var presentation = StreamingDocument.CreatePresentation(
     stream, PresentationDocumentType.Presentation, leaveOpen: true);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L152-L163' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L153-L164' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 | Method | Description |
@@ -74,8 +74,8 @@ using var presentation = StreamingDocument.CreatePresentation(
 | `AddRelationship(partUri, relationshipType, id?)` | Adds a package-level relationship (written to `_rels/.rels`) |
 | `CreatePart(partUri, contentType)` | Creates a part and returns an `OpenXmlPartEntry` for streaming writes |
 | `WritePart(partUri, contentType, rootElement, relationships?)` | One-shot: writes an element tree as a complete part |
-| `Finish()` | Finalizes the package (writes content types and relationships) |
-| `Dispose()` / `DisposeAsync()` | Calls `Finish` if needed, then closes the underlying ZIP |
+| `FlushAsync(cancellationToken?)` | Asynchronously flushes the internal write buffer to the target stream |
+| `Dispose()` / `DisposeAsync()` | Finalizes the package: writes rels + content types, disposes the archive, flushes the buffer |
 
 ### `OpenXmlPartEntry`
 
@@ -91,10 +91,12 @@ A struct passed to `WritePart` to declare part-level relationships inline:
 var relationship = new PartRelationship(
     targetUri: new("styles.xml", UriKind.Relative),
     relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-    targetMode: TargetMode.Internal, // default
-    id: "rId1"); // optional, auto-generated if null
+    // default
+    targetMode: TargetMode.Internal,
+    // optional, auto-generated if null
+    id: "rId1");
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L169-L175' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L170-L178' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -180,12 +182,13 @@ writer.WritePart(
     new("/xl/workbook.xml", UriKind.Relative),
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
     new S.Workbook(
-        new S.Sheets(new S.Sheet
-        {
-            Name = "Sheet1",
-            SheetId = 1,
-            Id = "rId1"
-        })),
+        new S.Sheets(
+            new S.Sheet
+            {
+                Name = "Sheet1",
+                SheetId = 1,
+                Id = "rId1"
+            })),
     [
         new(
             new("worksheets/sheet1.xml", UriKind.Relative),
@@ -193,7 +196,7 @@ writer.WritePart(
             id: "rId1")
     ]);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L80-L97' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L80-L98' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 External relationships (e.g. hyperlinks) are written by passing `TargetMode.External`:
@@ -207,7 +210,7 @@ entry.AddRelationship(
     TargetMode.External,
     "rId1");
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L120-L126' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L121-L127' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -226,7 +229,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
     new P.Presentation(new P.SlideIdList()));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L134-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L135-L145' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -235,9 +238,99 @@ writer.WritePart(
 The writer works against any writable stream. This makes it suitable for writing straight to an HTTP response, compressed streams, or pipelines — no `MemoryStream` buffering required.
 
 
+### Async disposal and remote sinks
+
+For remote sinks where per-write network latency dominates — SQL BLOB streams, cloud upload streams, HTTP response bodies — use `await using` so the final flush goes through the async path:
+
+<!-- snippet: async-usage -->
+<a id='snippet-async-usage'></a>
+```cs
+await using var writer = StreamingDocument.CreateWord(
+    stream,
+    WordprocessingDocumentType.Document,
+    leaveOpen: true);
+
+writer.WritePart(
+    new("/word/document.xml", UriKind.Relative),
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+    new Document(new Body(new Paragraph(new Run(new Text("Streamed async!"))))));
+
+// DisposeAsync (triggered by `await using`) asynchronously flushes
+// the final buffer — including the ZIP central directory — so remote
+// sinks like SQL BLOB streams don't block the thread on network I/O.
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L188-L202' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Internally the writer wraps the target stream in a fixed-size buffer (default 80 KB). `ZipArchive` writes into the buffer synchronously as parts are produced; the buffer only hits the target stream when it fills, which batches many small deflate writes into a few larger ones. On `DisposeAsync`, the final buffer — which always contains the ZIP central directory and any trailing metadata — is pushed to the target via `Stream.WriteAsync`, so the calling thread is not blocked on the final network write.
+
+The buffer size is configurable per writer. Pick a size matching your sink's preferred chunk size (SQL Server Large Value streams, Azure Blob block size, etc.):
+
+<!-- snippet: custom-buffer-size -->
+<a id='snippet-custom-buffer-size'></a>
+```cs
+// Bigger buffer = fewer, larger writes hit the sink — good for
+// remote streams where per-write overhead is high. Pass 0 to
+// disable buffering entirely and write straight to the sink.
+using var writer = new OpenXmlPackageWriter(
+    stream,
+    leaveOpen: true,
+    // 1 MB
+    bufferSize: 1024 * 1024);
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L210-L219' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+`bufferSize: 0` disables buffering and writes directly to the target. This also disables async flushing on `DisposeAsync` — there's nothing left to flush — so use it only when the target is already a local/in-memory stream where the extra copy isn't worth it.
+
+For progressive async flushing at part boundaries — e.g. "write a worksheet, push its bytes to the sink async, then write the next one" — call `FlushAsync` between parts:
+
+<!-- snippet: flush-async -->
+<a id='snippet-flush-async'></a>
+```cs
+// Write the worksheet, then push its bytes to the target stream
+// asynchronously before moving on to the next part. Useful at part
+// boundaries against remote sinks — the thread isn't blocked on
+// network I/O while the next part is being serialized.
+writer.WritePart(
+    new("/xl/worksheets/sheet1.xml", UriKind.Relative),
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
+    new S.Worksheet(new S.SheetData()));
+
+await writer.FlushAsync();
+
+writer.WritePart(
+    new("/xl/workbook.xml", UriKind.Relative),
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
+    new S.Workbook(
+        new S.Sheets(new S.Sheet
+        {
+            Name = "Sheet1",
+            SheetId = 1,
+            Id = "rId1"
+        })),
+    [
+        new(
+            new("worksheets/sheet1.xml", UriKind.Relative),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+            id: "rId1"),
+    ]);
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L232-L260' title='Snippet source file'>snippet source</a> | <a href='#snippet-flush-async' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+`FlushAsync` pushes whatever is currently sitting in the internal buffer to the target stream via `WriteAsync`. It's a no-op when the buffer is empty or when the writer is unbuffered (`bufferSize: 0`). It does **not** eliminate sync writes that spill from inside a single `WritePart` call when the part is larger than the buffer — those are an inherent consequence of `ZipArchive`'s sync write surface and the only mitigation is a bigger buffer.
+
+Notes and limitations:
+
+ * **XML serialization is synchronous.** `DocumentFormat.OpenXml`'s `OpenXmlElement.WriteTo(XmlWriter)` and `OpenXmlWriter` APIs are sync-only, and `ZipArchive` in Create mode calls sync `Write` on its underlying stream. The async surface exists at the writer's boundary — it cannot make the per-element serialization itself async.
+ * **Intermediate writes may still be synchronous.** `ZipArchive` calls `Flush()` on its target stream at a few points, which drains the buffer synchronously. The async guarantee covers the final flush during `DisposeAsync` and explicit `FlushAsync` calls, not every write.
+ * **Sync `Dispose` still works.** Calling `Dispose()` (or letting a `using` block dispose the writer) flushes the final buffer synchronously. Only switch to `await using` when you actually want the async flush behaviour.
+
+
 ### Finalization
 
-`Finish` writes `_rels/.rels` and `[Content_Types].xml`. It is called automatically by `Dispose`/`DisposeAsync`, but can be called explicitly if you need to flush before disposing.
+`Dispose`/`DisposeAsync` finalizes the package: writes `_rels/.rels`, writes `[Content_Types].xml`, disposes the underlying `ZipArchive` (which emits the ZIP central directory), and — on the async path — flushes the remaining buffered bytes to the target via `WriteAsync`.
 
 
 ## Benchmarks

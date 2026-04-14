@@ -1,26 +1,31 @@
 using W = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace OpenXmlStreaming.Benchmarks;
-
-internal static class IoScenarioContent
+static class IoScenarioContent
 {
-    public const int LargeWordParagraphs = 2000;
-    public const uint LargeSpreadsheetRows = 10_000;
-    public const int LargeSpreadsheetCols = 10;
+    const int largeWordParagraphs = 2000;
+    const uint largeSpreadsheetRows = 10_000;
+    const int largeSpreadsheetCols = 10;
 
-    public static Body BuildLargeWordBody()
+    static Body BuildLargeWordBody()
     {
         var body = new Body();
 
-        for (var i = 0; i < LargeWordParagraphs; i++)
+        for (var i = 0; i < largeWordParagraphs; i++)
         {
-            body.AppendChild(new Paragraph(
+            body.AppendChild(
+                new Paragraph(
                 new ParagraphProperties(
-                    new ParagraphStyleId { Val = "Heading1" }),
+                    new ParagraphStyleId
+                    {
+                        Val = "Heading1"
+                    }),
                 new W.Run(
                     new W.RunProperties(
                         new W.Bold(),
-                        new W.FontSize { Val = "28" }),
+                        new W.FontSize
+                        {
+                            Val = "28"
+                        }),
                     new W.Text("Section " + i)),
                 new W.Run(new W.Break()),
                 new W.Run(
@@ -34,15 +39,16 @@ internal static class IoScenarioContent
     {
         var sheetData = new SheetData();
 
-        for (uint r = 1; r <= LargeSpreadsheetRows; r++)
+        for (uint r = 1; r <= largeSpreadsheetRows; r++)
         {
             var row = new Row { RowIndex = r };
 
-            for (var c = 0; c < LargeSpreadsheetCols; c++)
+            for (var c = 0; c < largeSpreadsheetCols; c++)
             {
-                row.AppendChild(new Cell
+                row.AppendChild(
+                    new Cell
                 {
-                    CellValue = new CellValue(((r * LargeSpreadsheetCols) + (uint)c).ToString()),
+                    CellValue = new((r * largeSpreadsheetCols + (uint)c).ToString()),
                     DataType = CellValues.Number,
                 });
             }
@@ -59,10 +65,13 @@ internal static class IoScenarioContent
 
         var workbookPart = doc.AddWorkbookPart();
         var sheetPart = workbookPart.AddNewPart<WorksheetPart>();
-        sheetPart.Worksheet = new Worksheet(BuildLargeSheetData());
-        workbookPart.Workbook = new Workbook(
+        sheetPart.Worksheet = new(BuildLargeSheetData());
+        workbookPart.Workbook = new(
             new Sheets(
-                new Sheet { Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart) }));
+                new Sheet
+                {
+                    Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart)
+                }));
     }
 
     public static void WriteSpreadsheetForwardOnly(Stream target)
@@ -79,7 +88,12 @@ internal static class IoScenarioContent
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
             new Workbook(
                 new Sheets(
-                    new Sheet { Name = "Sheet1", SheetId = 1, Id = "rId1" })),
+                    new Sheet
+                    {
+                        Name = "Sheet1",
+                        SheetId = 1,
+                        Id = "rId1"
+                    })),
             [
                 new(
                     new("worksheets/sheet1.xml", UriKind.Relative),
@@ -91,7 +105,7 @@ internal static class IoScenarioContent
     public static void WriteWordStandard(Stream target)
     {
         using var doc = WordprocessingDocument.Create(target, WordprocessingDocumentType.Document);
-        doc.AddMainDocumentPart().Document = new Document(BuildLargeWordBody());
+        doc.AddMainDocumentPart().Document = new(BuildLargeWordBody());
     }
 
     public static void WriteWordForwardOnly(Stream target)
