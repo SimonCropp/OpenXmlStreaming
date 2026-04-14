@@ -41,11 +41,6 @@ public sealed class OpenXmlPackageWriter :
     /// </param>
     public OpenXmlPackageWriter(Stream stream, bool leaveOpen = false, int bufferSize = DefaultBufferSize)
     {
-        if (stream is null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
-
         if (bufferSize > 0)
         {
             bufferedStream = new(stream, bufferSize, leaveOpen);
@@ -64,16 +59,6 @@ public sealed class OpenXmlPackageWriter :
     {
         ThrowIfFinished();
 
-        if (partUri is null)
-        {
-            throw new ArgumentNullException(nameof(partUri));
-        }
-
-        if (relationshipType is null)
-        {
-            throw new ArgumentNullException(nameof(relationshipType));
-        }
-
         id ??= "rId" + (++nextRelId).ToString(CultureInfo.InvariantCulture);
 
         packageRelationships.Add((id, partUri, relationshipType, TargetMode.Internal));
@@ -89,16 +74,6 @@ public sealed class OpenXmlPackageWriter :
     public OpenXmlPartEntry CreatePart(Uri partUri, string contentType)
     {
         ThrowIfFinished();
-
-        if (partUri is null)
-        {
-            throw new ArgumentNullException(nameof(partUri));
-        }
-
-        if (contentType is null)
-        {
-            throw new ArgumentNullException(nameof(contentType));
-        }
 
         currentEntry?.Dispose();
 
@@ -124,11 +99,6 @@ public sealed class OpenXmlPackageWriter :
     /// </summary>
     public void WritePart(Uri partUri, string contentType, OpenXmlElement rootElement, IEnumerable<PartRelationship>? relationships = null)
     {
-        if (rootElement is null)
-        {
-            throw new ArgumentNullException(nameof(rootElement));
-        }
-
         using var entry = CreatePart(partUri, contentType);
 
         if (relationships is not null)

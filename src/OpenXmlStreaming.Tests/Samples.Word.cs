@@ -1,9 +1,7 @@
 using DocumentFormat.OpenXml.Wordprocessing;
-using P = DocumentFormat.OpenXml.Presentation;
-using S = DocumentFormat.OpenXml.Spreadsheet;
 
 [TestFixture]
-public class Samples
+public partial class Samples
 {
     [Test]
     public void MinimalWord()
@@ -67,38 +65,6 @@ public class Samples
     }
 
     [Test]
-    public void PartRelationships()
-    {
-        using var stream = new MemoryStream();
-        using var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
-
-        // begin-snippet: part-relationships
-        writer.WritePart(
-            new("/xl/workbook.xml", UriKind.Relative),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
-            new S.Workbook(
-                new S.Sheets(
-                    new S.Sheet
-                    {
-                        Name = "Sheet1",
-                        SheetId = 1,
-                        Id = "rId1"
-                    })),
-            [
-                new(
-                    new("worksheets/sheet1.xml", UriKind.Relative),
-                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
-                    id: "rId1")
-            ]);
-        // end-snippet
-
-        writer.WritePart(
-            new("/xl/worksheets/sheet1.xml", UriKind.Relative),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
-            new S.Worksheet(new S.SheetData()));
-    }
-
-    [Test]
     public void ExternalRelationship()
     {
         using var stream = new MemoryStream();
@@ -119,21 +85,6 @@ public class Samples
             "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
             TargetMode.External,
             "rId1");
-        // end-snippet
-    }
-
-    [Test]
-    public void Presentation()
-    {
-        using var stream = new MemoryStream();
-
-        // begin-snippet: create-presentation
-        using var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
-
-        writer.WritePart(
-            new("/ppt/presentation.xml", UriKind.Relative),
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
-            new P.Presentation(new P.SlideIdList()));
         // end-snippet
     }
 
@@ -206,100 +157,6 @@ public class Samples
     }
 
     [Test]
-    public async Task FlushBetweenParts()
-    {
-        using var stream = new MemoryStream();
-
-        await using var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
-
-        // begin-snippet: flush-async
-        // Write the worksheet, then push its bytes to the target stream
-        // asynchronously before moving on to the next part. Useful at part
-        // boundaries against remote sinks — the thread isn't blocked on
-        // network I/O while the next part is being serialized.
-        writer.WritePart(
-            new("/xl/worksheets/sheet1.xml", UriKind.Relative),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
-            new S.Worksheet(new S.SheetData()));
-
-        await writer.FlushAsync();
-
-        writer.WritePart(
-            new("/xl/workbook.xml", UriKind.Relative),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
-            new S.Workbook(
-                new S.Sheets(new S.Sheet
-                {
-                    Name = "Sheet1",
-                    SheetId = 1,
-                    Id = "rId1"
-                })),
-            [
-                new(
-                    new("worksheets/sheet1.xml", UriKind.Relative),
-                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
-                    id: "rId1"),
-            ]);
-        // end-snippet
-    }
-
-    [Test]
-    public async Task WorkbookBuilderSample()
-    {
-        using var stream = new MemoryStream();
-
-        // begin-snippet: workbook-builder
-        await using var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true);
-
-        workbook.AddWorksheet(
-            "Revenue",
-            new(
-                new S.SheetData(
-                    new S.Row(
-                        new S.Cell
-                        {
-                            CellValue = new("Q1"),
-                            DataType = S.CellValues.InlineString
-                        },
-                        new S.Cell
-                        {
-                            CellValue = new("1000"),
-                            DataType = S.CellValues.Number
-                        }),
-                    new S.Row(
-                        new S.Cell
-                        {
-                            CellValue = new("Q2"),
-                            DataType = S.CellValues.InlineString
-                        },
-                        new S.Cell
-                        {
-                            CellValue = new("1200"),
-                            DataType = S.CellValues.Number
-                        }))));
-
-        workbook.AddWorksheet(
-            "Expenses",
-            new(
-                new S.SheetData(
-                    new S.Row(
-                        new S.Cell
-                        {
-                            CellValue = new("Rent"),
-                            DataType = S.CellValues.InlineString
-                        },
-                        new S.Cell
-                        {
-                            CellValue = new("500"),
-                            DataType = S.CellValues.Number
-                        }))));
-
-        // DisposeAsync (triggered by `await using`) writes xl/workbook.xml
-        // referencing both sheets — no manual rId wiring.
-        // end-snippet
-    }
-
-    [Test]
     public async Task WordDocumentBuilderSample()
     {
         using var stream = new MemoryStream();
@@ -360,52 +217,5 @@ public class Samples
                             Id = footerId
                         }))));
         // end-snippet
-    }
-
-    [Test]
-    public async Task PresentationBuilderSample()
-    {
-        using var stream = new MemoryStream();
-
-        // begin-snippet: presentation-builder
-        await using var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true);
-
-        // No theme/master/layout boilerplate — the builder writes a default
-        // scaffolding on the first AddSlide call.
-        presentation.AddSlide(
-            new(
-                new P.CommonSlideData(
-                    new P.ShapeTree(
-                        new P.NonVisualGroupShapeProperties(
-                            new P.NonVisualDrawingProperties
-                            {
-                                Id = 1,
-                                Name = ""
-                            },
-                            new P.NonVisualGroupShapeDrawingProperties(),
-                            new P.ApplicationNonVisualDrawingProperties()),
-                        new P.GroupShapeProperties(
-                            new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
-
-        presentation.AddSlide(
-            new(
-                new P.CommonSlideData(
-                    new P.ShapeTree(
-                        new P.NonVisualGroupShapeProperties(
-                            new P.NonVisualDrawingProperties
-                            {
-                                Id = 1,
-                                Name = ""
-                            },
-                            new P.NonVisualGroupShapeDrawingProperties(),
-                            new P.ApplicationNonVisualDrawingProperties()),
-                        new P.GroupShapeProperties(
-                            new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
-
-        // DisposeAsync writes ppt/presentation.xml referencing the slide
-        // master and every slide that was added.
-        // end-snippet
-
-        await Task.CompletedTask;
     }
 }

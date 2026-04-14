@@ -45,16 +45,6 @@ public sealed class StreamingWorkbookBuilder :
     {
         ThrowIfFinished();
 
-        if (name is null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
-
-        if (worksheet is null)
-        {
-            throw new ArgumentNullException(nameof(worksheet));
-        }
-
         var index = worksheets.Count + 1;
         var fileName = "sheet" + index.ToString(CultureInfo.InvariantCulture) + ".xml";
         var partUri = "/xl/worksheets/" + fileName;

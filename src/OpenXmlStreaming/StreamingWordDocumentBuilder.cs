@@ -56,11 +56,6 @@ public sealed class StreamingWordDocumentBuilder :
     {
         ThrowIfDocumentWritten();
 
-        if (styles is null)
-        {
-            throw new ArgumentNullException(nameof(styles));
-        }
-
         if (stylesAdded)
         {
             throw new InvalidOperationException("Styles part has already been added.");
@@ -77,11 +72,6 @@ public sealed class StreamingWordDocumentBuilder :
     public string AddNumbering(Numbering numbering)
     {
         ThrowIfDocumentWritten();
-
-        if (numbering is null)
-        {
-            throw new ArgumentNullException(nameof(numbering));
-        }
 
         if (numberingAdded)
         {
@@ -101,11 +91,6 @@ public sealed class StreamingWordDocumentBuilder :
     {
         ThrowIfDocumentWritten();
 
-        if (header is null)
-        {
-            throw new ArgumentNullException(nameof(header));
-        }
-
         nextHeaderIndex++;
         var file = "header" + nextHeaderIndex.ToString(CultureInfo.InvariantCulture) + ".xml";
         return AddSubPart("/word/" + file, file, headerContentType, header, headerRelType);
@@ -120,11 +105,6 @@ public sealed class StreamingWordDocumentBuilder :
     {
         ThrowIfDocumentWritten();
 
-        if (footer is null)
-        {
-            throw new ArgumentNullException(nameof(footer));
-        }
-
         nextFooterIndex++;
         var file = "footer" + nextFooterIndex.ToString(CultureInfo.InvariantCulture) + ".xml";
         return AddSubPart("/word/" + file, file, footerContentType, footer, footerRelType);
@@ -137,11 +117,6 @@ public sealed class StreamingWordDocumentBuilder :
     public void WriteDocument(Document document)
     {
         ThrowIfDocumentWritten();
-
-        if (document is null)
-        {
-            throw new ArgumentNullException(nameof(document));
-        }
 
         documentWritten = true;
         writer.WritePart(

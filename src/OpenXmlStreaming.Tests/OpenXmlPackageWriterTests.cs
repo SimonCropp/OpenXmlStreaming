@@ -1,6 +1,7 @@
 using DocumentFormat.OpenXml.Wordprocessing;
 using P = DocumentFormat.OpenXml.Presentation;
 using S = DocumentFormat.OpenXml.Spreadsheet;
+// ReSharper disable MethodHasAsyncOverload
 
 [TestFixture]
 public class OpenXmlPackageWriterTests
@@ -332,10 +333,6 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
-    public void NullStream_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => new OpenXmlPackageWriter(null!));
-
-    [Test]
     public void NullPartUri_Throws()
     {
         using var stream = new MemoryStream();
@@ -344,72 +341,22 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
-    public void NullContentType_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        Assert.Throws<ArgumentNullException>(() => writer.CreatePart(new("/foo.xml", UriKind.Relative), null!));
-    }
-
-    [Test]
-    public void NullRootElement_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        Assert.Throws<ArgumentNullException>(() => writer.WritePart(new("/foo.xml", UriKind.Relative), "text/xml", null!));
-    }
-
-    [Test]
-    public void AddRelationship_NullPartUri_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        Assert.Throws<ArgumentNullException>(() => writer.AddRelationship(null!, "type"));
-    }
-
-    [Test]
-    public void AddRelationship_NullRelationshipType_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        Assert.Throws<ArgumentNullException>(() => writer.AddRelationship(new("/foo.xml", UriKind.Relative), null!));
-    }
-
-    [Test]
-    public void PartEntry_AddRelationship_NullTargetUri_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
-        Assert.Throws<ArgumentNullException>(() => entry.AddRelationship(null!, "type"));
-    }
-
-    [Test]
-    public void PartEntry_AddRelationship_NullRelationshipType_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
-        Assert.Throws<ArgumentNullException>(() => entry.AddRelationship(new("bar.xml", UriKind.Relative), null!));
-    }
-
-    [Test]
     public async Task PartEntry_RootLevelPart_WritesRelsAtPackageRoot()
     {
         using var stream = new MemoryStream();
 
-        using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             using var entry = writer.CreatePart(new("/root.xml", UriKind.Relative), "application/xml");
             entry.AddRelationship(new("other.xml", UriKind.Relative), "type", id: "rId1");
         }
 
         stream.Position = 0;
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        await using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
         var relsEntry = archive.GetEntry("_rels/root.xml.rels");
         Assert.That(relsEntry, Is.Not.Null);
 
-        using var relsStream = relsEntry!.Open();
+        await using var relsStream = relsEntry!.Open();
         using var reader = new StreamReader(relsStream);
         var xml = await reader.ReadToEndAsync();
         Assert.That(xml, Does.Contain("Target=\"other.xml\""));

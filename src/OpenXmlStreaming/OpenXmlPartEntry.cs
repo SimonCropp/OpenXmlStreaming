@@ -39,16 +39,6 @@ public sealed class OpenXmlPartEntry : IDisposable
     {
         ThrowIfDisposed();
 
-        if (targetUri is null)
-        {
-            throw new ArgumentNullException(nameof(targetUri));
-        }
-
-        if (relationshipType is null)
-        {
-            throw new ArgumentNullException(nameof(relationshipType));
-        }
-
         relationships ??= [];
 
         id ??= "rId" + (++nextRelId).ToString(CultureInfo.InvariantCulture);

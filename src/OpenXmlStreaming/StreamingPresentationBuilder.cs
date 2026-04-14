@@ -54,11 +54,6 @@ public sealed class StreamingPresentationBuilder :
     {
         ThrowIfFinished();
 
-        if (slide is null)
-        {
-            throw new ArgumentNullException(nameof(slide));
-        }
-
         EnsureScaffolding();
 
         var index = slides.Count + 1;
