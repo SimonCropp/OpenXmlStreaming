@@ -159,6 +159,25 @@ public partial class MigrationGuide
         await Verify(ms, extension: "pptx");
     }
 
+    [Test]
+    public async Task PresentationBuilder()
+    {
+        using var ms = new MemoryStream();
+
+        // begin-snippet: migration-presentation-builder
+        await using (var presentation = new StreamingPresentationBuilder(ms, leaveOpen: true))
+        {
+            // No theme, slide master, or slide layout boilerplate — the
+            // builder writes a minimal default scaffolding on the first
+            // AddSlide call.
+            presentation.AddSlide(BuildTitleSlide("Kickoff"));
+        }
+        // end-snippet
+
+        ms.Position = 0;
+        await Verify(ms, extension: "pptx");
+    }
+
     static SlideMaster BuildSlideMaster() =>
         new(
             new CommonSlideData(

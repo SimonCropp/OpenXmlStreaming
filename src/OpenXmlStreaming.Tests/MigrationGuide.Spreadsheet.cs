@@ -163,6 +163,53 @@ public partial class MigrationGuide
         await Verify(ms, extension: "xlsx");
     }
 
+    [Test]
+    public async Task SpreadsheetBuilder()
+    {
+        using var stream = new MemoryStream();
+
+        // begin-snippet: migration-spreadsheet-builder
+        await using (var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true))
+        {
+            workbook.AddWorksheet(
+                "Revenue",
+                new Worksheet(
+                    new SheetData(
+                        new Row(
+                            InlineString("A1", "Quarter"),
+                            InlineString("B1", "Revenue"))
+                        { RowIndex = 1 },
+                        new Row(
+                            InlineString("A2", "Q1"),
+                            Number("B2", "1000"))
+                        { RowIndex = 2 },
+                        new Row(
+                            InlineString("A3", "Q2"),
+                            Number("B3", "1200"))
+                        { RowIndex = 3 })));
+
+            workbook.AddWorksheet(
+                "Expenses",
+                new Worksheet(
+                    new SheetData(
+                        new Row(
+                            InlineString("A1", "Category"),
+                            InlineString("B1", "Amount"))
+                        { RowIndex = 1 },
+                        new Row(
+                            InlineString("A2", "Rent"),
+                            Number("B2", "500"))
+                        { RowIndex = 2 })));
+        }
+        // DisposeAsync (triggered by the `await using` block) writes
+        // xl/workbook.xml referencing every worksheet. No sheet URIs or
+        // rIds to track.
+        // end-snippet
+
+        stream.Position = 0;
+        await Verify(stream, extension: "xlsx");
+    }
+
     static Cell InlineString(string reference, string value) =>
         new()
         {

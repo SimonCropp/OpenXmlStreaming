@@ -461,7 +461,7 @@ Side-by-side ports of realistic documents from the standard `DocumentFormat.Open
 
 ### Word — styled document with a separate styles part
 
-Before:
+Before (standard DOM API):
 
 <details>
 <summary>Standard `WordprocessingDocument` API</summary>
@@ -523,7 +523,7 @@ using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Do
 
 </details>
 
-After:
+After (low-level `OpenXmlPackageWriter`):
 
 <!-- snippet: migration-word-streaming -->
 <a id='snippet-migration-word-streaming'></a>
@@ -589,10 +589,49 @@ await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
 <sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L70-L128' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+After (high-level `StreamingWordDocumentBuilder`):
+
+<!-- snippet: migration-word-builder -->
+<a id='snippet-migration-word-builder'></a>
+```cs
+await using (var word = new StreamingWordDocumentBuilder(ms, leaveOpen: true))
+{
+    // Add the styles part. The builder writes it immediately and
+    // tracks the relationship for the main document below.
+    word.AddStyles(new Styles(
+        new Style(
+            new StyleName { Val = "Heading 1" },
+            new BasedOn { Val = "Normal" },
+            new NextParagraphStyle { Val = "Normal" },
+            new StyleRunProperties(
+                new Bold(),
+                new FontSize { Val = "32" }))
+        {
+            Type = StyleValues.Paragraph,
+            StyleId = "Heading1"
+        }));
+
+    // Write the main document. The builder wires up the styles
+    // relationship for you — no PartRelationship plumbing.
+    word.WriteDocument(new Document(
+        new Body(
+            new Paragraph(
+                new ParagraphProperties(
+                    new ParagraphStyleId { Val = "Heading1" }),
+                new Run(new Text("Quarterly Report"))),
+            new Paragraph(
+                new Run(new Text("Revenue grew 15% year-over-year."))),
+            new Paragraph(
+                new Run(new Text("Operating costs held flat."))))));
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L139-L170' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-builder' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 
 ### Spreadsheet — workbook with multiple worksheets
 
-Before:
+Before (standard DOM API):
 
 <details>
 <summary>Standard `SpreadsheetDocument` API</summary>
@@ -669,7 +708,7 @@ using (var doc = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook
 
 </details>
 
-After:
+After (low-level `OpenXmlPackageWriter`):
 
 <!-- snippet: migration-spreadsheet-streaming -->
 <a id='snippet-migration-spreadsheet-streaming'></a>
@@ -752,12 +791,56 @@ await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: tru
 <sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L85-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+After (high-level `StreamingWorkbookBuilder`):
+
+<!-- snippet: migration-spreadsheet-builder -->
+<a id='snippet-migration-spreadsheet-builder'></a>
+```cs
+await using (var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true))
+{
+    workbook.AddWorksheet(
+        "Revenue",
+        new Worksheet(
+            new SheetData(
+                new Row(
+                    InlineString("A1", "Quarter"),
+                    InlineString("B1", "Revenue"))
+                { RowIndex = 1 },
+                new Row(
+                    InlineString("A2", "Q1"),
+                    Number("B2", "1000"))
+                { RowIndex = 2 },
+                new Row(
+                    InlineString("A3", "Q2"),
+                    Number("B3", "1200"))
+                { RowIndex = 3 })));
+
+    workbook.AddWorksheet(
+        "Expenses",
+        new Worksheet(
+            new SheetData(
+                new Row(
+                    InlineString("A1", "Category"),
+                    InlineString("B1", "Amount"))
+                { RowIndex = 1 },
+                new Row(
+                    InlineString("A2", "Rent"),
+                    Number("B2", "500"))
+                { RowIndex = 2 })));
+}
+// DisposeAsync (triggered by the `await using` block) writes
+// xl/workbook.xml referencing every worksheet. No sheet URIs or
+// rIds to track.
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L171-L207' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-builder' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 
 ### Presentation — title slide with slide master, layout, and theme
 
-A valid `.pptx` needs a theme, a slide master, and at least one slide layout in addition to the slides themselves. The DOM API wires the relationships between them for you; with the streaming writer every part is written explicitly in dependency order.
+A valid `.pptx` needs a theme, a slide master, and at least one slide layout in addition to the slides themselves. The DOM API wires the relationships between them for you; with the streaming writer every part is written explicitly in dependency order; the high-level builder ships with a default scaffolding so you only think about slides.
 
-Before:
+Before (standard DOM API):
 
 <details>
 <summary>Standard `PresentationDocument` API</summary>
@@ -820,7 +903,7 @@ using (var doc = PresentationDocument.Create(ms, PresentationDocumentType.Presen
 
 </details>
 
-After:
+After (low-level `OpenXmlPackageWriter`):
 
 <details>
 <summary>`OpenXmlPackageWriter` (streaming)</summary>
@@ -913,6 +996,22 @@ await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: tr
 <!-- endSnippet -->
 
 </details>
+
+After (high-level `StreamingPresentationBuilder`):
+
+<!-- snippet: migration-presentation-builder -->
+<a id='snippet-migration-presentation-builder'></a>
+```cs
+await using (var presentation = new StreamingPresentationBuilder(ms, leaveOpen: true))
+{
+    // No theme, slide master, or slide layout boilerplate — the
+    // builder writes a minimal default scaffolding on the first
+    // AddSlide call.
+    presentation.AddSlide(BuildTitleSlide("Kickoff"));
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Presentation.cs#L167-L175' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-builder' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 
 ## Benchmarks

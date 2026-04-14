@@ -130,4 +130,46 @@ public partial class MigrationGuide
         ms.Position = 0;
         await Verify(ms, extension: "docx");
     }
+
+    [Test]
+    public async Task WordBuilder()
+    {
+        using var ms = new MemoryStream();
+
+        // begin-snippet: migration-word-builder
+        await using (var word = new StreamingWordDocumentBuilder(ms, leaveOpen: true))
+        {
+            // Add the styles part. The builder writes it immediately and
+            // tracks the relationship for the main document below.
+            word.AddStyles(new Styles(
+                new Style(
+                    new StyleName { Val = "Heading 1" },
+                    new BasedOn { Val = "Normal" },
+                    new NextParagraphStyle { Val = "Normal" },
+                    new StyleRunProperties(
+                        new Bold(),
+                        new FontSize { Val = "32" }))
+                {
+                    Type = StyleValues.Paragraph,
+                    StyleId = "Heading1"
+                }));
+
+            // Write the main document. The builder wires up the styles
+            // relationship for you — no PartRelationship plumbing.
+            word.WriteDocument(new Document(
+                new Body(
+                    new Paragraph(
+                        new ParagraphProperties(
+                            new ParagraphStyleId { Val = "Heading1" }),
+                        new Run(new Text("Quarterly Report"))),
+                    new Paragraph(
+                        new Run(new Text("Revenue grew 15% year-over-year."))),
+                    new Paragraph(
+                        new Run(new Text("Operating costs held flat."))))));
+        }
+        // end-snippet
+
+        ms.Position = 0;
+        await Verify(ms, extension: "docx");
+    }
 }

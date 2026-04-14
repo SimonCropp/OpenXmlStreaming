@@ -1,0 +1,27 @@
+﻿{
+  Sheets: [
+    {
+      Name: Revenue,
+      Columns: [
+        {
+          Name: Quarter
+        },
+        {
+          Name: Revenue
+        }
+      ]
+    },
+    {
+      Name: Expenses,
+      Columns: [
+        {
+          Name: Category
+        },
+        {
+          Name: Amount
+        }
+      ]
+    }
+  ],
+  WorksheetCount: 2
+}
