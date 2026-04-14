@@ -3,7 +3,7 @@
 [![Build status](https://img.shields.io/appveyor/build/SimonCropp/OpenXmlStreaming)](https://ci.appveyor.com/project/SimonCropp/OpenXmlStreaming)
 [![NuGet Status](https://img.shields.io/nuget/v/OpenXmlStreaming.svg?label=OpenXmlStreaming)](https://www.nuget.org/packages/OpenXmlStreaming/)
 
-Forward-only writer for OPC packages (`.docx`, `.xlsx`, `.pptx`). Writes directly to any writable stream — including non-seekable streams such as HTTP response bodies — without buffering the whole package in a `MemoryStream`.
+Forward-only writer for Office Open XML documents (`.docx`, `.xlsx`, `.pptx`). Writes directly to any writable stream — including non-seekable streams such as HTTP response bodies — without buffering the whole document in a `MemoryStream`.
 
 
 ## NuGet package
@@ -35,7 +35,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
     new Document(new Body(new Paragraph(new Run(new Text("Hello!"))))));
 ```
-<sup><a href='src/OpenXmlStreaming.Tests/Samples.cs#L12-L24' title='Snippet source file'>snippet source</a> | <a href='#snippet-minimal-word' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L12-L24' title='Snippet source file'>snippet source</a> | <a href='#snippet-minimal-word' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -56,7 +56,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
     new Document(new Body(new Paragraph(new Run(new Text("Forward-only!"))))));
 ```
-<sup><a href='src/OpenXmlStreaming.Tests/Samples.cs#L32-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-document-factory' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L32-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-document-factory' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `CreateSpreadsheet` and `CreatePresentation` are also provided.
@@ -81,7 +81,7 @@ xmlWriter.WriteElement(new Paragraph(new Run(new Text("Streamed!"))));
 xmlWriter.WriteEndElement();
 xmlWriter.WriteEndElement();
 ```
-<sup><a href='src/OpenXmlStreaming.Tests/Samples.cs#L56-L68' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-part-content' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L56-L68' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-part-content' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Only one part may be open at a time. Creating a new part or disposing the writer automatically closes the current part.
@@ -111,7 +111,7 @@ writer.WritePart(
             id: "rId1")
     ]);
 ```
-<sup><a href='src/OpenXmlStreaming.Tests/Samples.cs#L80-L97' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L80-L97' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 External relationships (e.g. hyperlinks) are written by passing `TargetMode.External`:
@@ -125,7 +125,7 @@ entry.AddRelationship(
     TargetMode.External,
     "rId1");
 ```
-<sup><a href='src/OpenXmlStreaming.Tests/Samples.cs#L120-L126' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L120-L126' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -144,7 +144,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
     new P.Presentation(new P.SlideIdList()));
 ```
-<sup><a href='src/OpenXmlStreaming.Tests/Samples.cs#L134-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L134-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 

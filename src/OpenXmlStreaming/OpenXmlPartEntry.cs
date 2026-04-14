@@ -6,9 +6,9 @@ namespace OpenXmlStreaming;
 /// </summary>
 public sealed class OpenXmlPartEntry : IDisposable
 {
-    readonly ZipArchive archive;
-    readonly Uri partUri;
-    readonly Stream stream;
+    ZipArchive archive;
+    Uri partUri;
+    Stream stream;
     List<(string Id, Uri TargetUri, string RelationshipType, TargetMode TargetMode)>? relationships;
     bool disposed;
     int nextRelId;
@@ -70,7 +70,8 @@ public sealed class OpenXmlPartEntry : IDisposable
         disposed = true;
         stream.Dispose();
 
-        if (relationships is not null && relationships.Count > 0)
+        if (relationships is not null &&
+            relationships.Count > 0)
         {
             WriteRelationships();
         }
@@ -84,8 +85,8 @@ public sealed class OpenXmlPartEntry : IDisposable
 
         if (lastSlash >= 0)
         {
-            var dir = partPath.Substring(0, lastSlash + 1);
-            var file = partPath.Substring(lastSlash + 1);
+            var dir = partPath[..(lastSlash + 1)];
+            var file = partPath[(lastSlash + 1)..];
             relsPath = string.Concat(dir, "_rels/", file, ".rels");
         }
         else

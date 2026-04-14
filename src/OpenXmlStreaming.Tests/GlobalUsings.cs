@@ -1,4 +1,5 @@
-﻿global using System.IO.Packaging;
+﻿global using System.IO.Compression;
+global using System.IO.Packaging;
 global using DocumentFormat.OpenXml;
 global using DocumentFormat.OpenXml.Packaging;
 global using DocumentFormat.OpenXml.Wordprocessing;

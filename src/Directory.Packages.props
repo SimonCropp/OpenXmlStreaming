@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.4.0" />
-    <PackageVersion Include="DeterministicIoPackaging" Version="0.24.3" />
+    <PackageVersion Include="DeterministicIoPackaging" Version="0.25.0" />
     <PackageVersion Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
     <PackageVersion Include="Morph.OpenXml.Skia" Version="0.3.2" />
@@ -16,15 +16,14 @@
     <PackageVersion Include="Verify.DiffPlex" Version="3.1.2" />
     <PackageVersion Include="Verify.ImageSharp" Version="5.0.1" />
     <PackageVersion Include="Verify.NUnit" Version="31.15.0" />
-    <PackageVersion Include="Verify.OpenXML" Version="1.6.0" />
+    <PackageVersion Include="Verify.OpenXML" Version="1.7.0" />
     <PackageVersion Include="Argon" Version="0.33.5" />
     <PackageVersion Include="DiffEngine" Version="19.1.2" />
     <PackageVersion Include="EmptyFiles" Version="8.17.2" />
     <PackageVersion Include="SimpleInfoName" Version="3.2.0" />
-    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="28.0.2" />
+    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="28.1.0" />
     <PackageVersion Include="Polyfill" Version="10.2.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="Verify.OpenXml" Version="1.6.0" />
   </ItemGroup>
 </Project>

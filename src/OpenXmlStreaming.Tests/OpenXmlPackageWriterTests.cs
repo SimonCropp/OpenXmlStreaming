@@ -359,6 +359,62 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
+    public void AddRelationship_NullPartUri_Throws()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(ms);
+        Assert.Throws<ArgumentNullException>(() => writer.AddRelationship(null!, "type"));
+    }
+
+    [Test]
+    public void AddRelationship_NullRelationshipType_Throws()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(ms);
+        Assert.Throws<ArgumentNullException>(() => writer.AddRelationship(new("/foo.xml", UriKind.Relative), null!));
+    }
+
+    [Test]
+    public void PartEntry_AddRelationship_NullTargetUri_Throws()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(ms);
+        using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
+        Assert.Throws<ArgumentNullException>(() => entry.AddRelationship(null!, "type"));
+    }
+
+    [Test]
+    public void PartEntry_AddRelationship_NullRelationshipType_Throws()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(ms);
+        using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
+        Assert.Throws<ArgumentNullException>(() => entry.AddRelationship(new("bar.xml", UriKind.Relative), null!));
+    }
+
+    [Test]
+    public async Task PartEntry_RootLevelPart_WritesRelsAtPackageRoot()
+    {
+        using var ms = new MemoryStream();
+
+        using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        {
+            using var entry = writer.CreatePart(new("/root.xml", UriKind.Relative), "application/xml");
+            entry.AddRelationship(new("other.xml", UriKind.Relative), "type", id: "rId1");
+        }
+
+        ms.Position = 0;
+        using var archive = new ZipArchive(ms, ZipArchiveMode.Read);
+        var relsEntry = archive.GetEntry("_rels/root.xml.rels");
+        Assert.That(relsEntry, Is.Not.Null);
+
+        using var relsStream = relsEntry!.Open();
+        using var reader = new StreamReader(relsStream);
+        var xml = await reader.ReadToEndAsync();
+        Assert.That(xml, Does.Contain("Target=\"other.xml\""));
+    }
+
+    [Test]
     public async Task AddRelationship_AutoGeneratesId()
     {
         using var ms = new MemoryStream();
