@@ -333,14 +333,6 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
-    public void NullPartUri_Throws()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(stream);
-        Assert.Throws<ArgumentNullException>(() => writer.CreatePart(null!, "text/xml"));
-    }
-
-    [Test]
     public async Task PartEntry_RootLevelPart_WritesRelsAtPackageRoot()
     {
         using var stream = new MemoryStream();

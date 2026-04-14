@@ -145,7 +145,7 @@ sealed class BufferedWriteStream(Stream target, int bufferSize, bool leaveOpen) 
 
         try
         {
-            await FlushAsync(default);
+            await FlushAsync(Cancel.None);
         }
         finally
         {

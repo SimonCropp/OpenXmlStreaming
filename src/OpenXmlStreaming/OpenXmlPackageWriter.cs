@@ -16,11 +16,17 @@ public sealed class OpenXmlPackageWriter :
     /// </summary>
     public const int DefaultBufferSize = 81920;
 
-    readonly BufferedWriteStream? bufferedStream;
-    readonly ZipArchive archive;
-    readonly List<(Uri PartUri, string ContentType)> contentTypes = [];
-    readonly List<(string Id, Uri TargetUri, string RelationshipType, TargetMode TargetMode)> packageRelationships = [];
-    readonly HashSet<string> writtenParts = new(StringComparer.OrdinalIgnoreCase);
+    static readonly XmlWriterSettings xmlWriterSettings = new()
+    {
+        CloseOutput = false,
+        Encoding = Encoding.UTF8,
+    };
+
+    BufferedWriteStream? bufferedStream;
+    ZipArchive archive;
+    List<(Uri PartUri, string ContentType)> contentTypes = [];
+    List<(string Id, Uri TargetUri, string RelationshipType, TargetMode TargetMode)> packageRelationships = [];
+    HashSet<string> writtenParts = new(StringComparer.OrdinalIgnoreCase);
     OpenXmlPartEntry? currentEntry;
     bool finished;
     int nextRelId;
@@ -109,13 +115,7 @@ public sealed class OpenXmlPackageWriter :
             }
         }
 
-        using var xmlWriter = XmlWriter.Create(
-            entry.Stream,
-            new()
-        {
-            CloseOutput = false,
-            Encoding = Encoding.UTF8,
-        });
+        using var xmlWriter = XmlWriter.Create(entry.Stream, xmlWriterSettings);
 
         rootElement.WriteTo(xmlWriter);
     }
@@ -207,13 +207,7 @@ public sealed class OpenXmlPackageWriter :
 
     internal static void WriteRelationshipsXml(Stream stream, List<(string Id, Uri TargetUri, string RelationshipType, TargetMode TargetMode)> relationships)
     {
-        using var writer = XmlWriter.Create(
-            stream,
-            new()
-        {
-            CloseOutput = false,
-            Encoding = Encoding.UTF8,
-        });
+        using var writer = XmlWriter.Create(stream, xmlWriterSettings);
 
         writer.WriteStartDocument();
         writer.WriteStartElement("Relationships", "http://schemas.openxmlformats.org/package/2006/relationships");
@@ -240,13 +234,7 @@ public sealed class OpenXmlPackageWriter :
     {
         var entry = archive.CreateEntry("[Content_Types].xml", CompressionLevel.Optimal);
         using var stream = entry.Open();
-        using var writer = XmlWriter.Create(
-            stream,
-            new()
-        {
-            CloseOutput = false,
-            Encoding = Encoding.UTF8,
-        });
+        using var writer = XmlWriter.Create(stream, xmlWriterSettings);
 
         writer.WriteStartDocument();
         writer.WriteStartElement("Types", "http://schemas.openxmlformats.org/package/2006/content-types");
@@ -264,13 +252,24 @@ public sealed class OpenXmlPackageWriter :
         foreach (var (partUri, contentType) in contentTypes)
         {
             writer.WriteStartElement("Override");
-            var partName = partUri.OriginalString;
-            writer.WriteAttributeString("PartName", partName.Length > 0 && partName[0] == '/' ? partName : "/" + partName);
+            var partName = GetPartName(partUri);
+            writer.WriteAttributeString("PartName", partName);
             writer.WriteAttributeString("ContentType", contentType);
             writer.WriteEndElement();
         }
 
         writer.WriteEndElement();
+    }
+
+     static string GetPartName(Uri partUri)
+    {
+        var originalString = partUri.OriginalString;
+        if (originalString.Length > 0 && originalString[0] == '/')
+        {
+            return originalString;
+        }
+
+        return "/" + originalString;
     }
 
     void ThrowIfFinished()
