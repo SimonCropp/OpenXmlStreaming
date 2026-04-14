@@ -253,22 +253,46 @@ public class Samples
 
         workbook.AddWorksheet(
             "Revenue",
-            new S.Worksheet(
+            new(
                 new S.SheetData(
                     new S.Row(
-                        new S.Cell { CellValue = new("Q1"), DataType = S.CellValues.InlineString },
-                        new S.Cell { CellValue = new("1000"), DataType = S.CellValues.Number }),
+                        new S.Cell
+                        {
+                            CellValue = new("Q1"),
+                            DataType = S.CellValues.InlineString
+                        },
+                        new S.Cell
+                        {
+                            CellValue = new("1000"),
+                            DataType = S.CellValues.Number
+                        }),
                     new S.Row(
-                        new S.Cell { CellValue = new("Q2"), DataType = S.CellValues.InlineString },
-                        new S.Cell { CellValue = new("1200"), DataType = S.CellValues.Number }))));
+                        new S.Cell
+                        {
+                            CellValue = new("Q2"),
+                            DataType = S.CellValues.InlineString
+                        },
+                        new S.Cell
+                        {
+                            CellValue = new("1200"),
+                            DataType = S.CellValues.Number
+                        }))));
 
         workbook.AddWorksheet(
             "Expenses",
-            new S.Worksheet(
+            new(
                 new S.SheetData(
                     new S.Row(
-                        new S.Cell { CellValue = new("Rent"), DataType = S.CellValues.InlineString },
-                        new S.Cell { CellValue = new("500"), DataType = S.CellValues.Number }))));
+                        new S.Cell
+                        {
+                            CellValue = new("Rent"),
+                            DataType = S.CellValues.InlineString
+                        },
+                        new S.Cell
+                        {
+                            CellValue = new("500"),
+                            DataType = S.CellValues.Number
+                        }))));
 
         // DisposeAsync (triggered by `await using`) writes xl/workbook.xml
         // referencing both sheets — no manual rId wiring.
@@ -284,11 +308,23 @@ public class Samples
         await using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);
 
         // Add an optional styles part — referenced by paragraphs via StyleId.
-        word.AddStyles(new Styles(
+        word.AddStyles(
+            new(
             new Style(
-                new StyleName { Val = "Heading 1" },
-                new BasedOn { Val = "Normal" },
-                new StyleRunProperties(new Bold(), new FontSize { Val = "32" }))
+                new StyleName
+                {
+                    Val = "Heading 1"
+                },
+                new BasedOn
+                {
+                    Val = "Normal"
+                },
+                new StyleRunProperties(
+                    new Bold(),
+                    new FontSize
+                    {
+                        Val = "32"
+                    }))
             {
                 Type = StyleValues.Paragraph,
                 StyleId = "Heading1"
@@ -296,23 +332,33 @@ public class Samples
 
         // AddFooter returns the relationship id — plug it into SectionProperties
         // in the document body below so the body-level FooterReference resolves.
-        var footerId = word.AddFooter(new Footer(
-            new Paragraph(new Run(new Text("— Confidential —")))));
+        var footerId = word.AddFooter(
+            new(
+                new Paragraph(new Run(new Text("— Confidential —")))));
 
         // Last step: write the main document body. The builder wires up all
         // the accumulated sub-part relationships (styles + footer) for you.
-        word.WriteDocument(new Document(
-            new Body(
-                new Paragraph(
-                    new ParagraphProperties(new ParagraphStyleId { Val = "Heading1" }),
-                    new Run(new Text("Quarterly Report"))),
-                new Paragraph(new Run(new Text("Revenue grew 15% year-over-year."))),
-                new SectionProperties(
-                    new FooterReference
-                    {
-                        Type = HeaderFooterValues.Default,
-                        Id = footerId
-                    }))));
+        word.WriteDocument(
+            new(
+                new Body(
+                    new Paragraph(
+                        new ParagraphProperties(
+                            new ParagraphStyleId
+                            {
+                                Val = "Heading1"
+                            }),
+                        new Run(
+                            new Text("Quarterly Report"))),
+                    new Paragraph(
+                        new Run(
+                            new Text(
+                                "Revenue grew 15% year-over-year."))),
+                    new SectionProperties(
+                        new FooterReference
+                        {
+                            Type = HeaderFooterValues.Default,
+                            Id = footerId
+                        }))));
         // end-snippet
     }
 
@@ -326,25 +372,35 @@ public class Samples
 
         // No theme/master/layout boilerplate — the builder writes a default
         // scaffolding on the first AddSlide call.
-        presentation.AddSlide(new P.Slide(
-            new P.CommonSlideData(
-                new P.ShapeTree(
-                    new P.NonVisualGroupShapeProperties(
-                        new P.NonVisualDrawingProperties { Id = 1, Name = "" },
-                        new P.NonVisualGroupShapeDrawingProperties(),
-                        new P.ApplicationNonVisualDrawingProperties()),
-                    new P.GroupShapeProperties(
-                        new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
+        presentation.AddSlide(
+            new(
+                new P.CommonSlideData(
+                    new P.ShapeTree(
+                        new P.NonVisualGroupShapeProperties(
+                            new P.NonVisualDrawingProperties
+                            {
+                                Id = 1,
+                                Name = ""
+                            },
+                            new P.NonVisualGroupShapeDrawingProperties(),
+                            new P.ApplicationNonVisualDrawingProperties()),
+                        new P.GroupShapeProperties(
+                            new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
 
-        presentation.AddSlide(new P.Slide(
-            new P.CommonSlideData(
-                new P.ShapeTree(
-                    new P.NonVisualGroupShapeProperties(
-                        new P.NonVisualDrawingProperties { Id = 1, Name = "" },
-                        new P.NonVisualGroupShapeDrawingProperties(),
-                        new P.ApplicationNonVisualDrawingProperties()),
-                    new P.GroupShapeProperties(
-                        new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
+        presentation.AddSlide(
+            new(
+                new P.CommonSlideData(
+                    new P.ShapeTree(
+                        new P.NonVisualGroupShapeProperties(
+                            new P.NonVisualDrawingProperties
+                            {
+                                Id = 1,
+                                Name = ""
+                            },
+                            new P.NonVisualGroupShapeDrawingProperties(),
+                            new P.ApplicationNonVisualDrawingProperties()),
+                        new P.GroupShapeProperties(
+                            new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
 
         // DisposeAsync writes ppt/presentation.xml referencing the slide
         // master and every slide that was added.

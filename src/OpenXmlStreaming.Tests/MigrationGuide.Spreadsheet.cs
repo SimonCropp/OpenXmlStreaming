@@ -5,10 +5,10 @@ public partial class MigrationGuide
     [Test]
     public async Task SpreadsheetStandard()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
 // begin-snippet: migration-spreadsheet-standard
-        using (var doc = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
+        using (var doc = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
             var workbookPart = doc.AddWorkbookPart();
             var sheets = new Sheets();
@@ -73,17 +73,17 @@ public partial class MigrationGuide
         }
 // end-snippet
 
-        ms.Position = 0;
-        await Verify(ms, extension: "xlsx");
+        stream.Position = 0;
+        await Verify(stream, extension: "xlsx");
     }
 
     [Test]
     public async Task SpreadsheetStreaming()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
 // begin-snippet: migration-spreadsheet-streaming
-        await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true))
         {
             // Worksheets are written first — the workbook references them by id.
             writer.WritePart(
@@ -159,8 +159,8 @@ public partial class MigrationGuide
         }
 // end-snippet
 
-        ms.Position = 0;
-        await Verify(ms, extension: "xlsx");
+        stream.Position = 0;
+        await Verify(stream, extension: "xlsx");
     }
 
     [Test]
@@ -173,33 +173,43 @@ public partial class MigrationGuide
         {
             workbook.AddWorksheet(
                 "Revenue",
-                new Worksheet(
+                new(
                     new SheetData(
                         new Row(
                             InlineString("A1", "Quarter"),
                             InlineString("B1", "Revenue"))
-                        { RowIndex = 1 },
+                        {
+                            RowIndex = 1
+                        },
                         new Row(
                             InlineString("A2", "Q1"),
                             Number("B2", "1000"))
-                        { RowIndex = 2 },
+                        {
+                            RowIndex = 2
+                        },
                         new Row(
                             InlineString("A3", "Q2"),
                             Number("B3", "1200"))
-                        { RowIndex = 3 })));
+                        {
+                            RowIndex = 3
+                        })));
 
             workbook.AddWorksheet(
                 "Expenses",
-                new Worksheet(
+                new(
                     new SheetData(
                         new Row(
                             InlineString("A1", "Category"),
                             InlineString("B1", "Amount"))
-                        { RowIndex = 1 },
+                        {
+                            RowIndex = 1
+                        },
                         new Row(
                             InlineString("A2", "Rent"),
                             Number("B2", "500"))
-                        { RowIndex = 2 })));
+                        {
+                            RowIndex = 2
+                        })));
         }
         // DisposeAsync (triggered by the `await using` block) writes
         // xl/workbook.xml referencing every worksheet. No sheet URIs or

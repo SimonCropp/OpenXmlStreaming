@@ -94,10 +94,11 @@ public sealed class StreamingWorkbookBuilder :
                 SheetId = (uint)(i + 1),
                 Id = relId
             });
-            relationships.Add(new PartRelationship(
-                new(target, UriKind.Relative),
-                worksheetRelType,
-                id: relId));
+            relationships.Add(
+                new(
+                    new(target, UriKind.Relative),
+                    worksheetRelType,
+                    id: relId));
         }
 
         writer.WritePart(
@@ -113,10 +114,10 @@ public sealed class StreamingWorkbookBuilder :
         writer.Dispose();
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Finish();
-        await writer.DisposeAsync();
+        return writer.DisposeAsync();
     }
 
     void ThrowIfFinished()

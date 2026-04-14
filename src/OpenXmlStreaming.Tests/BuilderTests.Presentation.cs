@@ -6,16 +6,16 @@ public partial class BuilderTests
     [Test]
     public async Task StreamingPresentationBuilder_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var presentation = new StreamingPresentationBuilder(ms, leaveOpen: true))
+        await using (var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true))
         {
             presentation.AddSlide(TitleSlide("Kickoff"));
             presentation.AddSlide(TitleSlide("Agenda"));
         }
 
-        ms.Position = 0;
-        using var doc = PresentationDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = PresentationDocument.Open(stream, false);
         var slideIds = doc.PresentationPart!.Presentation!.SlideIdList!.Elements<SlideId>().ToList();
 
         Assert.Multiple(() =>
@@ -25,30 +25,30 @@ public partial class BuilderTests
             Assert.That(doc.PresentationPart.SlideMasterParts.Count(), Is.EqualTo(1));
         });
 
-        ms.Position = 0;
-        await Verify(ms, extension: "pptx");
+        stream.Position = 0;
+        await Verify(stream, extension: "pptx");
     }
 
     [Test]
     public async Task StreamingPresentationBuilder_NoSlides_StillWritesScaffolding()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var presentation = new StreamingPresentationBuilder(ms, leaveOpen: true))
+        await using (var _ = new StreamingPresentationBuilder(stream, leaveOpen: true))
         {
             // Intentionally no slides added.
         }
 
-        ms.Position = 0;
-        using var doc = PresentationDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = PresentationDocument.Open(stream, false);
         Assert.That(doc.PresentationPart!.Presentation, Is.Not.Null);
     }
 
     [Test]
     public void StreamingPresentationBuilder_AddAfterDispose_Throws()
     {
-        using var ms = new MemoryStream();
-        var presentation = new StreamingPresentationBuilder(ms, leaveOpen: true);
+        using var stream = new MemoryStream();
+        var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true);
         presentation.Dispose();
 
         Assert.Throws<InvalidOperationException>(() =>
@@ -60,22 +60,40 @@ public partial class BuilderTests
             new CommonSlideData(
                 new ShapeTree(
                     new NonVisualGroupShapeProperties(
-                        new NonVisualDrawingProperties { Id = 1, Name = "" },
+                        new NonVisualDrawingProperties
+                        {
+                            Id = 1,
+                            Name = ""
+                        },
                         new NonVisualGroupShapeDrawingProperties(),
                         new ApplicationNonVisualDrawingProperties()),
                     new GroupShapeProperties(new Drawing.TransformGroup()),
                     new Shape(
                         new NonVisualShapeProperties(
-                            new NonVisualDrawingProperties { Id = 2, Name = "Title" },
-                            new NonVisualShapeDrawingProperties(new Drawing.ShapeLocks { NoGrouping = true }),
+                            new NonVisualDrawingProperties
+                            {
+                                Id = 2,
+                                Name = "Title"
+                            },
+                            new NonVisualShapeDrawingProperties(
+                                new Drawing.ShapeLocks
+                                {
+                                    NoGrouping = true
+                                }),
                             new ApplicationNonVisualDrawingProperties(
-                                new PlaceholderShape { Type = PlaceholderValues.CenteredTitle })),
+                                new PlaceholderShape
+                                {
+                                    Type = PlaceholderValues.CenteredTitle
+                                })),
                         new ShapeProperties(),
                         new TextBody(
                             new Drawing.BodyProperties(),
                             new Drawing.ListStyle(),
                             new Drawing.Paragraph(
                                 new Drawing.Run(
-                                    new Drawing.RunProperties { Language = "en-US" },
+                                    new Drawing.RunProperties
+                                    {
+                                        Language = "en-US"
+                                    },
                                     new Drawing.Text(title))))))));
 }

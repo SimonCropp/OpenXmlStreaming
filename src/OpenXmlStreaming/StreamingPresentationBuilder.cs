@@ -113,10 +113,11 @@ public sealed class StreamingPresentationBuilder :
                 Id = slideId,
                 RelationshipId = relId
             });
-            relationships.Add(new PartRelationship(
-                new("slides/" + fileName, UriKind.Relative),
-                slideRelType,
-                id: relId));
+            relationships.Add(
+                new(
+                    new("slides/" + fileName, UriKind.Relative),
+                    slideRelType,
+                    id: relId));
         }
 
         writer.WritePart(
@@ -129,8 +130,16 @@ public sealed class StreamingPresentationBuilder :
                     RelationshipId = "master"
                 }),
                 slideIdList,
-                new SlideSize { Cx = 9144000, Cy = 6858000 },
-                new NotesSize { Cx = 6858000, Cy = 9144000 }),
+                new SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                },
+                new NotesSize
+                {
+                    Cx = 6858000,
+                    Cy = 9144000
+                }),
             relationships);
     }
 
@@ -140,10 +149,10 @@ public sealed class StreamingPresentationBuilder :
         writer.Dispose();
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Finish();
-        await writer.DisposeAsync();
+        return writer.DisposeAsync();
     }
 
     void EnsureScaffolding()
@@ -196,11 +205,20 @@ public sealed class StreamingPresentationBuilder :
         new(
             new CommonSlideData(
                 new Background(
-                    new BackgroundStyleReference(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor })
-                    { Index = 1001 }),
+                    new BackgroundStyleReference(new Drawing.SchemeColor
+                    {
+                        Val = Drawing.SchemeColorValues.PhColor
+                    })
+                    {
+                        Index = 1001
+                    }),
                 new ShapeTree(
                     new NonVisualGroupShapeProperties(
-                        new NonVisualDrawingProperties { Id = 1, Name = "" },
+                        new NonVisualDrawingProperties
+                        {
+                            Id = 1,
+                            Name = ""
+                        },
                         new NonVisualGroupShapeDrawingProperties(),
                         new ApplicationNonVisualDrawingProperties()),
                     new GroupShapeProperties(new Drawing.TransformGroup()))),
@@ -219,64 +237,217 @@ public sealed class StreamingPresentationBuilder :
                 Hyperlink = Drawing.ColorSchemeIndexValues.Hyperlink,
                 FollowedHyperlink = Drawing.ColorSchemeIndexValues.FollowedHyperlink
             },
-            new SlideLayoutIdList(new SlideLayoutId { Id = 2147483649U, RelationshipId = "rId2" }));
+            new SlideLayoutIdList(new SlideLayoutId
+            {
+                Id = 2147483649U,
+                RelationshipId = "rId2"
+            }));
 
     static SlideLayout BuildDefaultLayout() =>
         new(
             new CommonSlideData(
                 new ShapeTree(
                     new NonVisualGroupShapeProperties(
-                        new NonVisualDrawingProperties { Id = 1, Name = "" },
+                        new NonVisualDrawingProperties
+                        {
+                            Id = 1,
+                            Name = ""
+                        },
                         new NonVisualGroupShapeDrawingProperties(),
                         new ApplicationNonVisualDrawingProperties()),
                     new GroupShapeProperties(new Drawing.TransformGroup()))),
             new ColorMapOverride(new Drawing.MasterColorMapping()))
-        { Type = SlideLayoutValues.Title };
+        {
+            Type = SlideLayoutValues.Title
+        };
 
     static Drawing.Theme BuildDefaultTheme() =>
         new(
             new Drawing.ThemeElements(
                 new Drawing.ColorScheme(
-                    new Drawing.Dark1Color(new Drawing.SystemColor { Val = Drawing.SystemColorValues.WindowText, LastColor = "000000" }),
-                    new Drawing.Light1Color(new Drawing.SystemColor { Val = Drawing.SystemColorValues.Window, LastColor = "FFFFFF" }),
-                    new Drawing.Dark2Color(new Drawing.RgbColorModelHex { Val = "1F497D" }),
-                    new Drawing.Light2Color(new Drawing.RgbColorModelHex { Val = "EEECE1" }),
-                    new Drawing.Accent1Color(new Drawing.RgbColorModelHex { Val = "4F81BD" }),
-                    new Drawing.Accent2Color(new Drawing.RgbColorModelHex { Val = "C0504D" }),
-                    new Drawing.Accent3Color(new Drawing.RgbColorModelHex { Val = "9BBB59" }),
-                    new Drawing.Accent4Color(new Drawing.RgbColorModelHex { Val = "8064A2" }),
-                    new Drawing.Accent5Color(new Drawing.RgbColorModelHex { Val = "4BACC6" }),
-                    new Drawing.Accent6Color(new Drawing.RgbColorModelHex { Val = "F79646" }),
-                    new Drawing.Hyperlink(new Drawing.RgbColorModelHex { Val = "0000FF" }),
-                    new Drawing.FollowedHyperlinkColor(new Drawing.RgbColorModelHex { Val = "800080" }))
-                { Name = "Office" },
+                    new Drawing.Dark1Color(
+                        new Drawing.SystemColor
+                        {
+                            Val = Drawing.SystemColorValues.WindowText,
+                            LastColor = "000000"
+                        }),
+                    new Drawing.Light1Color(
+                        new Drawing.SystemColor
+                        {
+                            Val = Drawing.SystemColorValues.Window,
+                            LastColor = "FFFFFF"
+                        }),
+                    new Drawing.Dark2Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "1F497D"
+                        }),
+                    new Drawing.Light2Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "EEECE1"
+                        }),
+                    new Drawing.Accent1Color(new Drawing.RgbColorModelHex
+                    {
+                        Val = "4F81BD"
+                    }),
+                    new Drawing.Accent2Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "C0504D"
+                        }),
+                    new Drawing.Accent3Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "9BBB59"
+                        }),
+                    new Drawing.Accent4Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "8064A2"
+                        }),
+                    new Drawing.Accent5Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "4BACC6"
+                        }),
+                    new Drawing.Accent6Color(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "F79646"
+                        }),
+                    new Drawing.Hyperlink(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "0000FF"
+                        }),
+                    new Drawing.FollowedHyperlinkColor(
+                        new Drawing.RgbColorModelHex
+                        {
+                            Val = "800080"
+                        }))
+                {
+                    Name = "Office"
+                },
                 new Drawing.FontScheme(
-                    new Drawing.MajorFont(new Drawing.LatinFont { Typeface = "Calibri" }, new Drawing.EastAsianFont { Typeface = "" }, new Drawing.ComplexScriptFont { Typeface = "" }),
-                    new Drawing.MinorFont(new Drawing.LatinFont { Typeface = "Calibri" }, new Drawing.EastAsianFont { Typeface = "" }, new Drawing.ComplexScriptFont { Typeface = "" }))
-                { Name = "Office" },
+                    new Drawing.MajorFont(
+                        new Drawing.LatinFont
+                        {
+                            Typeface = "Calibri"
+                        },
+                        new Drawing.EastAsianFont
+                        {
+                            Typeface = ""
+                        },
+                        new Drawing.ComplexScriptFont
+                        {
+                            Typeface = ""
+                        }),
+                    new Drawing.MinorFont(
+                        new Drawing.LatinFont
+                        {
+                            Typeface = "Calibri"
+                        },
+                        new Drawing.EastAsianFont
+                        {
+                            Typeface = ""
+                        },
+                        new Drawing.ComplexScriptFont
+                        {
+                            Typeface = ""
+                        }))
+                {
+                    Name = "Office"
+                },
                 new Drawing.FormatScheme(
                     new Drawing.FillStyleList(
-                        new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor }),
+                        new Drawing.SolidFill(
+                            new Drawing.SchemeColor
+                            {
+                                Val = Drawing.SchemeColorValues.PhColor
+                            }),
                         new Drawing.GradientFill(
                             new Drawing.GradientStopList(
-                                new Drawing.GradientStop(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor }) { Position = 0 },
-                                new Drawing.GradientStop(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor }) { Position = 100000 }),
-                            new Drawing.LinearGradientFill { Angle = 5400000, Scaled = true }),
-                        new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor })),
+                                new Drawing.GradientStop(
+                                    new Drawing.SchemeColor
+                                    {
+                                        Val = Drawing.SchemeColorValues.PhColor
+                                    })
+                                {
+                                    Position = 0
+                                },
+                                new Drawing.GradientStop(
+                                    new Drawing.SchemeColor
+                                    {
+                                        Val = Drawing.SchemeColorValues.PhColor
+                                    })
+                                {
+                                    Position = 100000
+                                }),
+                            new Drawing.LinearGradientFill
+                            {
+                                Angle = 5400000,
+                                Scaled = true
+                            }),
+                        new Drawing.SolidFill(
+                            new Drawing.SchemeColor
+                            {
+                                Val = Drawing.SchemeColorValues.PhColor
+                            })),
                     new Drawing.LineStyleList(
-                        new Drawing.Outline(new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor })) { Width = 9525 },
-                        new Drawing.Outline(new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor })) { Width = 25400 },
-                        new Drawing.Outline(new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor })) { Width = 38100 }),
+                        new Drawing.Outline(
+                            new Drawing.SolidFill(
+                                new Drawing.SchemeColor
+                                {
+                                    Val = Drawing.SchemeColorValues.PhColor
+                                }))
+                        {
+                            Width = 9525
+                        },
+                        new Drawing.Outline(
+                            new Drawing.SolidFill(
+                                new Drawing.SchemeColor
+                                {
+                                    Val = Drawing.SchemeColorValues.PhColor
+                                }))
+                        {
+                            Width = 25400
+                        },
+                        new Drawing.Outline(
+                            new Drawing.SolidFill(
+                                new Drawing.SchemeColor
+                                {
+                                    Val = Drawing.SchemeColorValues.PhColor
+                                }))
+                        {
+                            Width = 38100
+                        }),
                     new Drawing.EffectStyleList(
                         new Drawing.EffectStyle(new Drawing.EffectList()),
                         new Drawing.EffectStyle(new Drawing.EffectList()),
                         new Drawing.EffectStyle(new Drawing.EffectList())),
                     new Drawing.BackgroundFillStyleList(
-                        new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor }),
-                        new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor }),
-                        new Drawing.SolidFill(new Drawing.SchemeColor { Val = Drawing.SchemeColorValues.PhColor })))
-                { Name = "Office" }),
+                        new Drawing.SolidFill(
+                            new Drawing.SchemeColor
+                            {
+                                Val = Drawing.SchemeColorValues.PhColor
+                            }),
+                        new Drawing.SolidFill(
+                            new Drawing.SchemeColor
+                            {
+                                Val = Drawing.SchemeColorValues.PhColor
+                            }),
+                        new Drawing.SolidFill(
+                            new Drawing.SchemeColor
+                            {
+                                Val = Drawing.SchemeColorValues.PhColor
+                            })))
+                {
+                    Name = "Office"
+                }),
             new Drawing.ObjectDefaults(),
             new Drawing.ExtraColorSchemeList())
-        { Name = "Office Theme" };
+        {
+            Name = "Office Theme"
+        };
 }

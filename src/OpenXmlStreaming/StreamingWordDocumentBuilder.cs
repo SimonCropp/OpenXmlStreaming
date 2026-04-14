@@ -166,10 +166,11 @@ public sealed class StreamingWordDocumentBuilder :
             contentType,
             content);
 
-        documentRelationships.Add(new PartRelationship(
-            new(relativeTarget, UriKind.Relative),
-            relationshipType,
-            id: relId));
+        documentRelationships.Add(
+            new(
+                new(relativeTarget, UriKind.Relative),
+                relationshipType,
+                id: relId));
 
         return relId;
     }

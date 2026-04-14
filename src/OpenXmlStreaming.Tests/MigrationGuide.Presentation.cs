@@ -9,10 +9,10 @@ public partial class MigrationGuide
     [Test]
     public async Task PresentationStandard()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
 // begin-snippet: migration-presentation-standard
-        using (var doc = PresentationDocument.Create(ms, PresentationDocumentType.Presentation))
+        using (var doc = PresentationDocument.Create(stream, PresentationDocumentType.Presentation))
         {
             var presentationPart = doc.AddPresentationPart();
             presentationPart.Presentation = new();
@@ -63,17 +63,17 @@ public partial class MigrationGuide
         }
 // end-snippet
 
-        ms.Position = 0;
-        await Verify(ms, extension: "pptx");
+        stream.Position = 0;
+        await Verify(stream, extension: "pptx");
     }
 
     [Test]
     public async Task PresentationStreaming()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
 // begin-snippet: migration-presentation-streaming
-        await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true))
         {
             // Theme — referenced from the slide master.
             writer.WritePart(
@@ -155,17 +155,17 @@ public partial class MigrationGuide
         }
 // end-snippet
 
-        ms.Position = 0;
-        await Verify(ms, extension: "pptx");
+        stream.Position = 0;
+        await Verify(stream, extension: "pptx");
     }
 
     [Test]
     public async Task PresentationBuilder()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
         // begin-snippet: migration-presentation-builder
-        await using (var presentation = new StreamingPresentationBuilder(ms, leaveOpen: true))
+        await using (var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true))
         {
             // No theme, slide master, or slide layout boilerplate — the
             // builder writes a minimal default scaffolding on the first
@@ -174,8 +174,8 @@ public partial class MigrationGuide
         }
         // end-snippet
 
-        ms.Position = 0;
-        await Verify(ms, extension: "pptx");
+        stream.Position = 0;
+        await Verify(stream, extension: "pptx");
     }
 
     static SlideMaster BuildSlideMaster() =>

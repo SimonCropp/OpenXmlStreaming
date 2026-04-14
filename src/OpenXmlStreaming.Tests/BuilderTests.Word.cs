@@ -5,72 +5,90 @@ public partial class BuilderTests
     [Test]
     public async Task StreamingWordDocumentBuilder_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var word = new StreamingWordDocumentBuilder(ms, leaveOpen: true))
+        await using (var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true))
         {
-            word.AddStyles(new Styles(
-                new Style(
-                    new StyleName { Val = "Heading 1" },
-                    new BasedOn { Val = "Normal" },
-                    new NextParagraphStyle { Val = "Normal" },
-                    new StyleRunProperties(
-                        new Bold(),
-                        new FontSize { Val = "32" }))
-                {
-                    Type = StyleValues.Paragraph,
-                    StyleId = "Heading1"
-                }));
-
-            var footerId = word.AddFooter(new Footer(
-                new Paragraph(
-                    new Run(new Text("— Confidential —")))));
-
-            word.WriteDocument(new Document(
-                new Body(
-                    new Paragraph(
-                        new ParagraphProperties(
-                            new ParagraphStyleId { Val = "Heading1" }),
-                        new Run(new Text("Quarterly Report"))),
-                    new Paragraph(
-                        new Run(new Text("Revenue grew 15% year-over-year."))),
-                    new SectionProperties(
-                        new FooterReference
+            word.AddStyles(
+                new(
+                    new Style(
+                        new StyleName
                         {
-                            Type = HeaderFooterValues.Default,
-                            Id = footerId
-                        }))));
+                            Val = "Heading 1"
+                        },
+                        new BasedOn
+                        {
+                            Val = "Normal"
+                        },
+                        new NextParagraphStyle
+                        {
+                            Val = "Normal"
+                        },
+                        new StyleRunProperties(
+                            new Bold(),
+                            new FontSize
+                            {
+                                Val = "32"
+                            }))
+                    {
+                        Type = StyleValues.Paragraph,
+                        StyleId = "Heading1"
+                    }));
+
+            var footerId = word.AddFooter(
+                new(
+                    new Paragraph(
+                        new Run(new Text("— Confidential —")))));
+
+            word.WriteDocument(
+                new(
+                    new Body(
+                        new Paragraph(
+                            new ParagraphProperties(
+                                new ParagraphStyleId
+                                {
+                                    Val = "Heading1"
+                                }),
+                            new Run(new Text("Quarterly Report"))),
+                        new Paragraph(
+                            new Run(new Text("Revenue grew 15% year-over-year."))),
+                        new SectionProperties(
+                            new FooterReference
+                            {
+                                Type = HeaderFooterValues.Default,
+                                Id = footerId
+                            }))));
         }
 
-        ms.Position = 0;
-        using var doc = WordprocessingDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Does.Contain("Quarterly Report"));
         Assert.That(doc.MainDocumentPart.FooterParts.Count(), Is.EqualTo(1));
         Assert.That(doc.MainDocumentPart.StyleDefinitionsPart, Is.Not.Null);
 
-        ms.Position = 0;
-        await Verify(ms, extension: "docx");
+        stream.Position = 0;
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
     public void StreamingWordDocumentBuilder_AddStylesAfterDocument_Throws()
     {
-        using var ms = new MemoryStream();
-        using var word = new StreamingWordDocumentBuilder(ms, leaveOpen: true);
-        word.WriteDocument(new Document(new Body()));
+        using var stream = new MemoryStream();
+        using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);
+        word.WriteDocument(new(new Body()));
 
         Assert.Throws<InvalidOperationException>(() =>
-            word.AddStyles(new Styles()));
+            word.AddStyles(new()));
     }
 
     [Test]
     public void StreamingWordDocumentBuilder_DoubleStyles_Throws()
     {
-        using var ms = new MemoryStream();
-        using var word = new StreamingWordDocumentBuilder(ms, leaveOpen: true);
-        word.AddStyles(new Styles());
+        using var stream = new MemoryStream();
+        using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);
+        word.AddStyles(new());
 
         Assert.Throws<InvalidOperationException>(() =>
-            word.AddStyles(new Styles()));
+            word.AddStyles(new()));
     }
 }

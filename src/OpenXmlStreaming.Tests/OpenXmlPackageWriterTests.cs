@@ -8,9 +8,9 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task WriteMinimalDocx_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -23,22 +23,22 @@ public class OpenXmlPackageWriterTests
                 new Document(new Body(new Paragraph(new Run(new Text("Hello!"))))));
         }
 
-        ms.Position = 0;
-        using var doc = WordprocessingDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart, Is.Not.Null);
         Assert.That(doc.MainDocumentPart!.Document, Is.Not.Null);
         Assert.That(doc.MainDocumentPart.Document!.Body!.InnerText, Is.EqualTo("Hello!"));
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
     public async Task CreateWord_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreateWord(stream, leaveOpen: true))
         {
             writer.WritePart(
                 new("/word/document.xml", UriKind.Relative),
@@ -46,20 +46,20 @@ public class OpenXmlPackageWriterTests
                 new Document(new Body(new Paragraph(new Run(new Text("Forward-only!"))))));
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = WordprocessingDocument.Open(ms, false);
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Forward-only!"));
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
     public async Task WriteToNonSeekableStream()
     {
-        using var ms = new MemoryStream();
-        await using var nonSeekable = new NonSeekableStream(ms);
+        using var stream = new MemoryStream();
+        await using var nonSeekable = new NonSeekableStream(stream);
 
         await using (var writer = new OpenXmlPackageWriter(nonSeekable, leaveOpen: true))
         {
@@ -74,21 +74,21 @@ public class OpenXmlPackageWriterTests
                 new Document(new Body(new Paragraph(new Run(new Text("Non-seekable!"))))));
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = WordprocessingDocument.Open(ms, false);
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Non-seekable!"));
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
     public async Task CreatePart_WithOpenXmlWriter()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -108,21 +108,21 @@ public class OpenXmlPackageWriterTests
             xmlWriter.WriteEndElement();
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = WordprocessingDocument.Open(ms, false);
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Streamed!"));
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
     public async Task PartRelationships_AreWritten()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -152,21 +152,21 @@ public class OpenXmlPackageWriterTests
                 new Styles());
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = WordprocessingDocument.Open(ms, false);
+        using var doc = WordprocessingDocument.Open(stream, false);
         var rels = doc.MainDocumentPart!.GetPartsOfType<StyleDefinitionsPart>();
         Assert.That(rels, Is.Not.Empty);
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
     public void DuplicatePartUri_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
 
         writer.WritePart(
             new("/word/document.xml", UriKind.Relative),
@@ -183,8 +183,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public void OperationsAfterFinish_Throw()
     {
-        using var ms = new MemoryStream();
-        var writer = new OpenXmlPackageWriter(ms, leaveOpen: true);
+        using var stream = new MemoryStream();
+        var writer = new OpenXmlPackageWriter(stream, leaveOpen: true);
         writer.Finish();
 
         Assert.Throws<InvalidOperationException>(() =>
@@ -197,9 +197,9 @@ public class OpenXmlPackageWriterTests
     [Test]
     public void AutoDisposesPreviousPartEntry()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        using var writer = new OpenXmlPackageWriter(ms, leaveOpen: true);
+        using var writer = new OpenXmlPackageWriter(stream, leaveOpen: true);
 
         writer.AddRelationship(
             new("/word/document.xml", UriKind.Relative),
@@ -229,9 +229,9 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task CreateSpreadsheet_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true))
         {
             writer.WritePart(
                 new("/xl/workbook.xml", UriKind.Relative),
@@ -261,21 +261,21 @@ public class OpenXmlPackageWriterTests
                     }))));
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = SpreadsheetDocument.Open(ms, false);
+        using var doc = SpreadsheetDocument.Open(stream, false);
         Assert.That(doc.WorkbookPart!.Workbook!.Sheets!, Is.Not.Empty);
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "xlsx");
+        await Verify(stream, extension: "xlsx");
     }
 
     [Test]
     public async Task CreatePresentation_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true))
         {
             writer.WritePart(
                 new("/ppt/presentation.xml", UriKind.Relative),
@@ -283,21 +283,21 @@ public class OpenXmlPackageWriterTests
                 new P.Presentation(new P.SlideIdList()));
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = PresentationDocument.Open(ms, false);
+        using var doc = PresentationDocument.Open(stream, false);
         Assert.That(doc.PresentationPart!.Presentation, Is.Not.Null);
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "pptx");
+        await Verify(stream, extension: "pptx");
     }
 
     [Test]
     public async Task ExternalRelationship_IsWritten()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -322,13 +322,13 @@ public class OpenXmlPackageWriterTests
             xmlWriter.WriteEndElement();
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = WordprocessingDocument.Open(ms, false);
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.HyperlinkRelationships, Is.Not.Empty);
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 
     [Test]
@@ -338,48 +338,48 @@ public class OpenXmlPackageWriterTests
     [Test]
     public void NullPartUri_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         Assert.Throws<ArgumentNullException>(() => writer.CreatePart(null!, "text/xml"));
     }
 
     [Test]
     public void NullContentType_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         Assert.Throws<ArgumentNullException>(() => writer.CreatePart(new("/foo.xml", UriKind.Relative), null!));
     }
 
     [Test]
     public void NullRootElement_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         Assert.Throws<ArgumentNullException>(() => writer.WritePart(new("/foo.xml", UriKind.Relative), "text/xml", null!));
     }
 
     [Test]
     public void AddRelationship_NullPartUri_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         Assert.Throws<ArgumentNullException>(() => writer.AddRelationship(null!, "type"));
     }
 
     [Test]
     public void AddRelationship_NullRelationshipType_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         Assert.Throws<ArgumentNullException>(() => writer.AddRelationship(new("/foo.xml", UriKind.Relative), null!));
     }
 
     [Test]
     public void PartEntry_AddRelationship_NullTargetUri_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
         Assert.Throws<ArgumentNullException>(() => entry.AddRelationship(null!, "type"));
     }
@@ -387,8 +387,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public void PartEntry_AddRelationship_NullRelationshipType_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
         Assert.Throws<ArgumentNullException>(() => entry.AddRelationship(new("bar.xml", UriKind.Relative), null!));
     }
@@ -396,16 +396,16 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task PartEntry_RootLevelPart_WritesRelsAtPackageRoot()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             using var entry = writer.CreatePart(new("/root.xml", UriKind.Relative), "application/xml");
             entry.AddRelationship(new("other.xml", UriKind.Relative), "type", id: "rId1");
         }
 
-        ms.Position = 0;
-        using var archive = new ZipArchive(ms, ZipArchiveMode.Read);
+        stream.Position = 0;
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
         var relsEntry = archive.GetEntry("_rels/root.xml.rels");
         Assert.That(relsEntry, Is.Not.Null);
 
@@ -418,8 +418,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task AddRelationship_AutoGeneratesId()
     {
-        using var ms = new MemoryStream();
-        await using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        await using var writer = new OpenXmlPackageWriter(stream);
         var id = writer.AddRelationship(new("/foo.xml", UriKind.Relative), "type");
         Assert.That(id, Does.StartWith("rId"));
     }
@@ -427,8 +427,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task PartEntry_AddRelationship_AutoGeneratesId()
     {
-        using var ms = new MemoryStream();
-        await using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        await using var writer = new OpenXmlPackageWriter(stream);
         using var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
         var id = entry.AddRelationship(new("bar.xml", UriKind.Relative), "type");
         Assert.That(id, Does.StartWith("rId"));
@@ -437,8 +437,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public void PartEntry_AddRelationship_AfterDispose_Throws()
     {
-        using var ms = new MemoryStream();
-        using var writer = new OpenXmlPackageWriter(ms);
+        using var stream = new MemoryStream();
+        using var writer = new OpenXmlPackageWriter(stream);
         var entry = writer.CreatePart(new("/foo.xml", UriKind.Relative), "text/xml");
         entry.Dispose();
         Assert.Throws<ObjectDisposedException>(() =>
@@ -448,8 +448,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public void FinishCalledTwice_DoesNotThrow()
     {
-        using var ms = new MemoryStream();
-        var writer = new OpenXmlPackageWriter(ms, leaveOpen: true);
+        using var stream = new MemoryStream();
+        var writer = new OpenXmlPackageWriter(stream, leaveOpen: true);
         writer.Finish();
         writer.Finish();
         writer.Dispose();
@@ -477,8 +477,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task DisposeAsync_FlushesFinalBufferAsynchronously()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true))
         {
@@ -504,16 +504,16 @@ public class OpenXmlPackageWriterTests
             Assert.That(tracker.TotalBytesWritten, Is.GreaterThan(0));
         });
 
-        ms.Position = 0;
-        using var doc = WordprocessingDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Async!"));
     }
 
     [Test]
     public void Dispose_FlushesFinalBufferSynchronously()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true))
         {
@@ -541,8 +541,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task BufferSize_Zero_WritesReachTargetDuringWritePart()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 0);
 
@@ -566,9 +566,9 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task BufferSize_Zero_RoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true, bufferSize: 0))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true, bufferSize: 0))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -581,16 +581,16 @@ public class OpenXmlPackageWriterTests
                 new Document(new Body(new Paragraph(new Run(new Text("Unbuffered!"))))));
         }
 
-        ms.Position = 0;
-        using var doc = WordprocessingDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Unbuffered!"));
     }
 
     [Test]
     public async Task BufferSize_Small_SpillsSyncThenAsyncFlush()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         // 64-byte buffer — far smaller than any part's payload — forces
         // sync spill flushes while ZipArchive is writing, then a final
@@ -616,16 +616,16 @@ public class OpenXmlPackageWriterTests
                 "Final flush during DisposeAsync should still be async");
         });
 
-        ms.Position = 0;
-        using var doc = WordprocessingDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Spilled!"));
     }
 
     [Test]
     public async Task FlushAsync_PushesBufferedBytesViaWriteAsync()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true);
         writer.AddRelationship(
@@ -649,8 +649,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task FlushAsync_EmptyBuffer_IsNoop()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true);
         // Nothing has been written yet — buffer is empty.
@@ -670,8 +670,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task FlushAsync_Unbuffered_IsNoop()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 0);
         writer.AddRelationship(
@@ -694,9 +694,9 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task FlushAsync_BetweenParts_PackageStillRoundTrips()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -722,8 +722,8 @@ public class OpenXmlPackageWriterTests
                 new Styles());
         }
 
-        ms.Position = 0;
-        using var doc = WordprocessingDocument.Open(ms, false);
+        stream.Position = 0;
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Flushed between!"));
         Assert.That(doc.MainDocumentPart.GetPartsOfType<StyleDefinitionsPart>(), Is.Not.Empty);
     }
@@ -731,8 +731,8 @@ public class OpenXmlPackageWriterTests
     [Test]
     public async Task DisposeAsync_LeaveOpen_DoesNotDisposeUnderlying()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true))
         {
@@ -748,15 +748,15 @@ public class OpenXmlPackageWriterTests
         }
 
         // Must still be writable after async dispose.
-        Assert.DoesNotThrow(() => ms.WriteByte(0));
+        Assert.DoesNotThrow(() => stream.WriteByte(0));
     }
 
     [Test]
     public async Task DisposeAsync_FinalizesPackage()
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
 
-        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        await using (var writer = new OpenXmlPackageWriter(stream, leaveOpen: true))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -769,13 +769,13 @@ public class OpenXmlPackageWriterTests
                 new Document(new Body()));
         }
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        using var doc = WordprocessingDocument.Open(ms, false);
+        using var doc = WordprocessingDocument.Open(stream, false);
         Assert.That(doc.MainDocumentPart, Is.Not.Null);
 
-        ms.Position = 0;
+        stream.Position = 0;
 
-        await Verify(ms, extension: "docx");
+        await Verify(stream, extension: "docx");
     }
 }

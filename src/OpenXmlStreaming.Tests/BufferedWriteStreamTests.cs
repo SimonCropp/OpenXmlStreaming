@@ -4,8 +4,8 @@ public class BufferedWriteStreamTests
     [Test]
     public async Task WriteAsync_SpillsViaTargetWriteAsync_NotSyncWrite()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         // 16-byte buffer with a 48-byte async write forces 3 spills during WriteAsync.
         // Every spill must go through target.WriteAsync — that's what distinguishes
@@ -26,8 +26,8 @@ public class BufferedWriteStreamTests
     [Test]
     public async Task WriteAsync_AccumulatesUntilDisposeAsync_WhenFitsInBuffer()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using (var buffered = new BufferedWriteStream(tracker, bufferSize: 1024, leaveOpen: true))
         {
@@ -44,8 +44,8 @@ public class BufferedWriteStreamTests
     [Test]
     public void Write_SyncSpillsViaTargetWrite()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         using var buffered = new BufferedWriteStream(tracker, bufferSize: 16, leaveOpen: true);
         buffered.Write(new byte[48], 0, 48);
@@ -62,28 +62,28 @@ public class BufferedWriteStreamTests
     [Test]
     public void Dispose_LeaveOpen_DoesNotDisposeTarget()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         using (var buffered = new BufferedWriteStream(tracker, bufferSize: 16, leaveOpen: true))
         {
             buffered.Write([1, 2, 3], 0, 3);
         }
 
-        Assert.DoesNotThrow(() => ms.WriteByte(0));
+        Assert.DoesNotThrow(() => stream.WriteByte(0));
     }
 
     [Test]
     public async Task DisposeAsync_LeaveOpen_DoesNotDisposeTarget()
     {
-        using var ms = new MemoryStream();
-        var tracker = new SyncAsyncTrackingStream(ms);
+        using var stream = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(stream);
 
         await using (var buffered = new BufferedWriteStream(tracker, bufferSize: 16, leaveOpen: true))
         {
             await buffered.WriteAsync(new byte[] { 1, 2, 3 });
         }
 
-        Assert.DoesNotThrow(() => ms.WriteByte(0));
+        Assert.DoesNotThrow(() => stream.WriteByte(0));
     }
 }
