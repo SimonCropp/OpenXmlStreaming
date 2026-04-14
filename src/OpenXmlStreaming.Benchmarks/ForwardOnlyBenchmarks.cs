@@ -1,8 +1,6 @@
 using P = DocumentFormat.OpenXml.Presentation;
 using W = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace OpenXmlStreaming.Benchmarks;
-
 [MemoryDiagnoser]
 public class ForwardOnlyBenchmarks
 {

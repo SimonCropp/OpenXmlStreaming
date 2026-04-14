@@ -151,11 +151,11 @@ public sealed class OpenXmlPackageWriter :
     }
 
     /// <summary>
-    /// Finalizes the package by writing _rels/.rels and [Content_Types].xml.
-    /// Called automatically by Dispose, but can be called explicitly.
-    /// After this call, no more parts can be added.
+    /// Writes _rels/.rels and [Content_Types].xml into the ZIP. Called by
+    /// <see cref="Dispose"/> and <see cref="DisposeAsync"/>; does not itself
+    /// write the ZIP central directory (the archive must be disposed for that).
     /// </summary>
-    public void Finish()
+    internal void Finish()
     {
         if (finished)
         {
@@ -191,7 +191,7 @@ public sealed class OpenXmlPackageWriter :
     public async ValueTask DisposeAsync()
     {
         Finish();
-        archive.Dispose();
+        await archive.DisposeAsync();
 
         if (bufferedStream is not null)
         {

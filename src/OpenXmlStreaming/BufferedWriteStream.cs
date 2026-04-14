@@ -57,6 +57,25 @@ sealed class BufferedWriteStream(Stream target, int bufferSize, bool leaveOpen) 
         }
     }
 
+    public override Task WriteAsync(byte[] buffer, int offset, int count, Cancel cancel) =>
+        WriteAsync(buffer.AsMemory(offset, count), cancel).AsTask();
+
+    public override async ValueTask WriteAsync(ReadOnlyMemory<byte> source, Cancel cancel = default)
+    {
+        while (source.Length > 0)
+        {
+            if (count == buffer.Length)
+            {
+                await FlushBufferAsyncCore(cancel);
+            }
+
+            var toCopy = Math.Min(source.Length, buffer.Length - count);
+            source.Span[..toCopy].CopyTo(buffer.AsSpan(count));
+            count += toCopy;
+            source = source[toCopy..];
+        }
+    }
+
     public override void Flush() =>
         FlushBufferSync();
 

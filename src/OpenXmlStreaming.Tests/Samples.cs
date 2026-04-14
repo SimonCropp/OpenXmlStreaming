@@ -84,11 +84,11 @@ public class Samples
             new S.Workbook(
                 new S.Sheets(
                     new S.Sheet
-                {
-                    Name = "Sheet1",
-                    SheetId = 1,
-                    Id = "rId1"
-                })),
+                    {
+                        Name = "Sheet1",
+                        SheetId = 1,
+                        Id = "rId1"
+                    })),
             [
                 new(
                     new("worksheets/sheet1.xml", UriKind.Relative),
@@ -171,8 +171,10 @@ public class Samples
         var relationship = new PartRelationship(
             targetUri: new("styles.xml", UriKind.Relative),
             relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-            targetMode: TargetMode.Internal, // default
-            id: "rId1"); // optional, auto-generated if null
+            // default
+            targetMode: TargetMode.Internal,
+            // optional, auto-generated if null
+            id: "rId1");
         // end-snippet
 
         _ = relationship;
@@ -212,7 +214,8 @@ public class Samples
         using var writer = new OpenXmlPackageWriter(
             stream,
             leaveOpen: true,
-            bufferSize: 1024 * 1024); // 1 MB
+            // 1 MB
+            bufferSize: 1024 * 1024);
         // end-snippet
     }
 

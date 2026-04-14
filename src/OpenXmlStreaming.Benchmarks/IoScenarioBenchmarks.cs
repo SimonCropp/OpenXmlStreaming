@@ -1,27 +1,31 @@
 using W = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace OpenXmlStreaming.Benchmarks;
-
-internal static class IoScenarioContent
+static class IoScenarioContent
 {
-    public const int LargeWordParagraphs = 2000;
-    public const uint LargeSpreadsheetRows = 10_000;
-    public const int LargeSpreadsheetCols = 10;
+    const int largeWordParagraphs = 2000;
+    const uint largeSpreadsheetRows = 10_000;
+    const int largeSpreadsheetCols = 10;
 
-    public static Body BuildLargeWordBody()
+    static Body BuildLargeWordBody()
     {
         var body = new Body();
 
-        for (var i = 0; i < LargeWordParagraphs; i++)
+        for (var i = 0; i < largeWordParagraphs; i++)
         {
             body.AppendChild(
                 new Paragraph(
                 new ParagraphProperties(
-                    new ParagraphStyleId { Val = "Heading1" }),
+                    new ParagraphStyleId
+                    {
+                        Val = "Heading1"
+                    }),
                 new W.Run(
                     new W.RunProperties(
                         new W.Bold(),
-                        new W.FontSize { Val = "28" }),
+                        new W.FontSize
+                        {
+                            Val = "28"
+                        }),
                     new W.Text("Section " + i)),
                 new W.Run(new W.Break()),
                 new W.Run(
@@ -35,16 +39,16 @@ internal static class IoScenarioContent
     {
         var sheetData = new SheetData();
 
-        for (uint r = 1; r <= LargeSpreadsheetRows; r++)
+        for (uint r = 1; r <= largeSpreadsheetRows; r++)
         {
             var row = new Row { RowIndex = r };
 
-            for (var c = 0; c < LargeSpreadsheetCols; c++)
+            for (var c = 0; c < largeSpreadsheetCols; c++)
             {
                 row.AppendChild(
                     new Cell
                 {
-                    CellValue = new((r * LargeSpreadsheetCols + (uint)c).ToString()),
+                    CellValue = new((r * largeSpreadsheetCols + (uint)c).ToString()),
                     DataType = CellValues.Number,
                 });
             }
