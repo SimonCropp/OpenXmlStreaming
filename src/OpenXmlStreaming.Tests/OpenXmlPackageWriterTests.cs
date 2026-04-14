@@ -37,7 +37,7 @@ public class OpenXmlPackageWriterTests
     {
         using var ms = new MemoryStream();
 
-        await using (var writer = StreamingDocument.CreateWord(ms, WordprocessingDocumentType.Document, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
         {
             writer.WritePart(
                 new("/word/document.xml", UriKind.Relative),
@@ -230,7 +230,7 @@ public class OpenXmlPackageWriterTests
     {
         using var ms = new MemoryStream();
 
-        await using (var writer = StreamingDocument.CreateSpreadsheet(ms, SpreadsheetDocumentType.Workbook, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: true))
         {
             writer.WritePart(
                 new("/xl/workbook.xml", UriKind.Relative),
@@ -274,7 +274,7 @@ public class OpenXmlPackageWriterTests
     {
         using var ms = new MemoryStream();
 
-        await using (var writer = StreamingDocument.CreatePresentation(ms, PresentationDocumentType.Presentation, leaveOpen: true))
+        await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: true))
         {
             writer.WritePart(
                 new("/ppt/presentation.xml", UriKind.Relative),

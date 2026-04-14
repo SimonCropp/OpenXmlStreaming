@@ -59,14 +59,11 @@ The main writer class. Constructed directly, or via a typed factory that pre-reg
 using var direct = new OpenXmlPackageWriter(stream, leaveOpen: true);
 
 // Typed factories (pre-register the officeDocument relationship)
-using var word = StreamingDocument.CreateWord(
-    stream, WordprocessingDocumentType.Document, leaveOpen: true);
-using var spreadsheet = StreamingDocument.CreateSpreadsheet(
-    stream, SpreadsheetDocumentType.Workbook, leaveOpen: true);
-using var presentation = StreamingDocument.CreatePresentation(
-    stream, PresentationDocumentType.Presentation, leaveOpen: true);
+using var word = StreamingDocument.CreateWord(stream, leaveOpen: true);
+using var spreadsheet = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
+using var presentation = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L153-L164' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L144-L152' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 | Method | Description |
@@ -96,7 +93,7 @@ var relationship = new PartRelationship(
     // optional, auto-generated if null
     id: "rId1");
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L170-L178' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L158-L166' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -130,17 +127,14 @@ writer.WritePart(
 <!-- snippet: streaming-document-factory -->
 <a id='snippet-streaming-document-factory'></a>
 ```cs
-using var writer = StreamingDocument.CreateWord(
-    stream,
-    WordprocessingDocumentType.Document,
-    leaveOpen: true);
+using var writer = StreamingDocument.CreateWord(stream, leaveOpen: true);
 
 writer.WritePart(
     new("/word/document.xml", UriKind.Relative),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
     new Document(new Body(new Paragraph(new Run(new Text("Forward-only!"))))));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L32-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-document-factory' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L32-L39' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-document-factory' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `CreateSpreadsheet` and `CreatePresentation` are also provided.
@@ -165,7 +159,7 @@ xmlWriter.WriteElement(new Paragraph(new Run(new Text("Streamed!"))));
 xmlWriter.WriteEndElement();
 xmlWriter.WriteEndElement();
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L56-L68' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-part-content' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L53-L65' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-part-content' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Only one part may be open at a time. Creating a new part or disposing the writer automatically closes the current part.
@@ -196,7 +190,7 @@ writer.WritePart(
             id: "rId1")
     ]);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L80-L98' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L74-L92' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 External relationships (e.g. hyperlinks) are written by passing `TargetMode.External`:
@@ -210,7 +204,7 @@ entry.AddRelationship(
     TargetMode.External,
     "rId1");
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L121-L127' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L115-L121' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -219,17 +213,14 @@ entry.AddRelationship(
 <!-- snippet: create-presentation -->
 <a id='snippet-create-presentation'></a>
 ```cs
-using var writer = StreamingDocument.CreatePresentation(
-    stream,
-    PresentationDocumentType.Presentation,
-    leaveOpen: true);
+using var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
 
 writer.WritePart(
     new("/ppt/presentation.xml", UriKind.Relative),
     "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
     new P.Presentation(new P.SlideIdList()));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L135-L145' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L129-L136' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -245,10 +236,7 @@ For remote sinks where per-write network latency dominates — SQL BLOB streams,
 <!-- snippet: async-usage -->
 <a id='snippet-async-usage'></a>
 ```cs
-await using var writer = StreamingDocument.CreateWord(
-    stream,
-    WordprocessingDocumentType.Document,
-    leaveOpen: true);
+await using var writer = StreamingDocument.CreateWord(stream, leaveOpen: true);
 
 writer.WritePart(
     new("/word/document.xml", UriKind.Relative),
@@ -259,7 +247,7 @@ writer.WritePart(
 // the final buffer — including the ZIP central directory — so remote
 // sinks like SQL BLOB streams don't block the thread on network I/O.
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L188-L202' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L176-L187' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Internally the writer wraps the target stream in a fixed-size buffer (default 80 KB). `ZipArchive` writes into the buffer synchronously as parts are produced; the buffer only hits the target stream when it fills, which batches many small deflate writes into a few larger ones. On `DisposeAsync`, the final buffer — which always contains the ZIP central directory and any trailing metadata — is pushed to the target via `Stream.WriteAsync`, so the calling thread is not blocked on the final network write.
@@ -278,7 +266,7 @@ using var writer = new OpenXmlPackageWriter(
     // 1 MB
     bufferSize: 1024 * 1024);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L210-L219' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L195-L204' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `bufferSize: 0` disables buffering and writes directly to the target. This also disables async flushing on `DisposeAsync` — there's nothing left to flush — so use it only when the target is already a local/in-memory stream where the extra copy isn't worth it.
@@ -316,7 +304,7 @@ writer.WritePart(
             id: "rId1"),
     ]);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L232-L260' title='Snippet source file'>snippet source</a> | <a href='#snippet-flush-async' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L214-L242' title='Snippet source file'>snippet source</a> | <a href='#snippet-flush-async' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `FlushAsync` pushes whatever is currently sitting in the internal buffer to the target stream via `WriteAsync`. It's a no-op when the buffer is empty or when the writer is unbuffered (`bufferSize: 0`). It does **not** eliminate sync writes that spill from inside a single `WritePart` call when the part is larger than the buffer — those are an inherent consequence of `ZipArchive`'s sync write surface and the only mitigation is a bigger buffer.

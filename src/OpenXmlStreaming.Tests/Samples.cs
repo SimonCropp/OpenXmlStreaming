@@ -30,10 +30,7 @@ public class Samples
         using var stream = new MemoryStream();
 
         // begin-snippet: streaming-document-factory
-        using var writer = StreamingDocument.CreateWord(
-            stream,
-            WordprocessingDocumentType.Document,
-            leaveOpen: true);
+        using var writer = StreamingDocument.CreateWord(stream, leaveOpen: true);
 
         writer.WritePart(
             new("/word/document.xml", UriKind.Relative),
@@ -72,10 +69,7 @@ public class Samples
     public void PartRelationships()
     {
         using var stream = new MemoryStream();
-        using var writer = StreamingDocument.CreateSpreadsheet(
-            stream,
-            SpreadsheetDocumentType.Workbook,
-            leaveOpen: true);
+        using var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
 
         // begin-snippet: part-relationships
         writer.WritePart(
@@ -133,10 +127,7 @@ public class Samples
         using var stream = new MemoryStream();
 
         // begin-snippet: create-presentation
-        using var writer = StreamingDocument.CreatePresentation(
-            stream,
-            PresentationDocumentType.Presentation,
-            leaveOpen: true);
+        using var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
 
         writer.WritePart(
             new("/ppt/presentation.xml", UriKind.Relative),
@@ -155,12 +146,9 @@ public class Samples
         using var direct = new OpenXmlPackageWriter(stream, leaveOpen: true);
 
         // Typed factories (pre-register the officeDocument relationship)
-        using var word = StreamingDocument.CreateWord(
-            stream, WordprocessingDocumentType.Document, leaveOpen: true);
-        using var spreadsheet = StreamingDocument.CreateSpreadsheet(
-            stream, SpreadsheetDocumentType.Workbook, leaveOpen: true);
-        using var presentation = StreamingDocument.CreatePresentation(
-            stream, PresentationDocumentType.Presentation, leaveOpen: true);
+        using var word = StreamingDocument.CreateWord(stream, leaveOpen: true);
+        using var spreadsheet = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
+        using var presentation = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
         // end-snippet
     }
 
@@ -186,10 +174,7 @@ public class Samples
         using var stream = new MemoryStream();
 
         // begin-snippet: async-usage
-        await using var writer = StreamingDocument.CreateWord(
-            stream,
-            WordprocessingDocumentType.Document,
-            leaveOpen: true);
+        await using var writer = StreamingDocument.CreateWord(stream, leaveOpen: true);
 
         writer.WritePart(
             new("/word/document.xml", UriKind.Relative),
@@ -224,10 +209,7 @@ public class Samples
     {
         using var stream = new MemoryStream();
 
-        await using var writer = StreamingDocument.CreateSpreadsheet(
-            stream,
-            SpreadsheetDocumentType.Workbook,
-            leaveOpen: true);
+        await using var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
 
         // begin-snippet: flush-async
         // Write the worksheet, then push its bytes to the target stream

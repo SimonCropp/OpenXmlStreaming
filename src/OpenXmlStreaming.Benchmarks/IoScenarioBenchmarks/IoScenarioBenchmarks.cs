@@ -70,13 +70,15 @@ static class IoScenarioContent
             new Sheets(
                 new Sheet
                 {
-                    Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart)
+                    Name = "Sheet1",
+                    SheetId = 1,
+                    Id = workbookPart.GetIdOfPart(sheetPart)
                 }));
     }
 
     public static void WriteSpreadsheetForwardOnly(Stream target)
     {
-        using var writer = StreamingDocument.CreateSpreadsheet(target, SpreadsheetDocumentType.Workbook);
+        using var writer = StreamingDocument.CreateSpreadsheet(target);
 
         writer.WritePart(
             new("/xl/worksheets/sheet1.xml", UriKind.Relative),
@@ -110,7 +112,7 @@ static class IoScenarioContent
 
     public static void WriteWordForwardOnly(Stream target)
     {
-        using var writer = StreamingDocument.CreateWord(target, WordprocessingDocumentType.Document);
+        using var writer = StreamingDocument.CreateWord(target);
 
         writer.WritePart(
             new("/word/document.xml", UriKind.Relative),

@@ -20,7 +20,7 @@ public class ForwardOnlyBenchmarks
     public void Word_Simple_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreateWord(stream, WordprocessingDocumentType.Document);
+        using var writer = StreamingDocument.CreateWord(stream);
         writer.WritePart(
             new("/word/document.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
@@ -55,7 +55,7 @@ public class ForwardOnlyBenchmarks
     public void Word_Medium_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreateWord(stream, WordprocessingDocumentType.Document);
+        using var writer = StreamingDocument.CreateWord(stream);
 
         var body = new Body();
 
@@ -131,7 +131,7 @@ public class ForwardOnlyBenchmarks
     public void Word_Complex_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreateWord(stream, WordprocessingDocumentType.Document);
+        using var writer = StreamingDocument.CreateWord(stream);
 
         var body = new Body();
 
@@ -223,7 +223,7 @@ public class ForwardOnlyBenchmarks
     public void Spreadsheet_Simple_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreateSpreadsheet(stream, SpreadsheetDocumentType.Workbook);
+        using var writer = StreamingDocument.CreateSpreadsheet(stream);
 
         writer.WritePart(
             new("/xl/worksheets/sheet1.xml", UriKind.Relative),
@@ -303,7 +303,7 @@ public class ForwardOnlyBenchmarks
     public void Spreadsheet_Medium_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreateSpreadsheet(stream, SpreadsheetDocumentType.Workbook);
+        using var writer = StreamingDocument.CreateSpreadsheet(stream);
 
         var sheetData = new SheetData();
 
@@ -404,7 +404,7 @@ public class ForwardOnlyBenchmarks
     public void Spreadsheet_Complex_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreateSpreadsheet(stream, SpreadsheetDocumentType.Workbook);
+        using var writer = StreamingDocument.CreateSpreadsheet(stream);
 
         var sheetRels = new PartRelationship[3];
 
@@ -499,7 +499,7 @@ public class ForwardOnlyBenchmarks
     public void Presentation_Simple_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreatePresentation(stream, PresentationDocumentType.Presentation);
+        using var writer = StreamingDocument.CreatePresentation(stream);
 
         writer.WritePart(
             new("/ppt/slides/slide1.xml", UriKind.Relative),
@@ -575,7 +575,7 @@ public class ForwardOnlyBenchmarks
     public void Presentation_Medium_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreatePresentation(stream, PresentationDocumentType.Presentation);
+        using var writer = StreamingDocument.CreatePresentation(stream);
 
         var slideRels = new PartRelationship[10];
         var slideIdList = new P.SlideIdList();
@@ -693,7 +693,7 @@ public class ForwardOnlyBenchmarks
     public void Presentation_Complex_ForwardOnly()
     {
         using var stream = new NonwritingStream();
-        using var writer = StreamingDocument.CreatePresentation(stream, PresentationDocumentType.Presentation);
+        using var writer = StreamingDocument.CreatePresentation(stream);
 
         var slideRels = new PartRelationship[30];
         var slideIdList = new P.SlideIdList();
