@@ -92,7 +92,7 @@ public sealed class StreamingWorkbookBuilder :
         }
 
         writer.WritePart(
-            new("/xl/workbook.xml", UriKind.Relative),
+            StreamingDocument.SpreadsheetWorkbookUri,
             workbookContentType,
             new Workbook(sheetsElement),
             relationships);

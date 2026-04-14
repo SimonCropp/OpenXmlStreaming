@@ -120,7 +120,7 @@ public sealed class StreamingWordDocumentBuilder :
 
         documentWritten = true;
         writer.WritePart(
-            new("/word/document.xml", UriKind.Relative),
+            StreamingDocument.WordDocumentUri,
             documentContentType,
             document,
             documentRelationships);

@@ -7,13 +7,17 @@ public static class StreamingDocument
 {
     const string officeDocumentRelationship = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";
 
+    internal static readonly Uri WordDocumentUri = new("/word/document.xml", UriKind.Relative);
+    internal static readonly Uri SpreadsheetWorkbookUri = new("/xl/workbook.xml", UriKind.Relative);
+    internal static readonly Uri PresentationUri = new("/ppt/presentation.xml", UriKind.Relative);
+
     /// <summary>
     /// Creates a forward-only writer for a Word document directly against the given stream.
     /// </summary>
     public static OpenXmlPackageWriter CreateWord(Stream stream, bool leaveOpen = false, int bufferSize = OpenXmlPackageWriter.DefaultBufferSize)
     {
         var writer = new OpenXmlPackageWriter(stream, leaveOpen, bufferSize);
-        writer.AddRelationship(new("/word/document.xml", UriKind.Relative), officeDocumentRelationship, "rId1");
+        writer.AddRelationship(WordDocumentUri, officeDocumentRelationship, "rId1");
         return writer;
     }
 
@@ -23,7 +27,7 @@ public static class StreamingDocument
     public static OpenXmlPackageWriter CreateSpreadsheet(Stream stream, bool leaveOpen = false, int bufferSize = OpenXmlPackageWriter.DefaultBufferSize)
     {
         var writer = new OpenXmlPackageWriter(stream, leaveOpen, bufferSize);
-        writer.AddRelationship(new("/xl/workbook.xml", UriKind.Relative), officeDocumentRelationship, "rId1");
+        writer.AddRelationship(SpreadsheetWorkbookUri, officeDocumentRelationship, "rId1");
         return writer;
     }
 
@@ -33,7 +37,7 @@ public static class StreamingDocument
     public static OpenXmlPackageWriter CreatePresentation(Stream stream, bool leaveOpen = false, int bufferSize = OpenXmlPackageWriter.DefaultBufferSize)
     {
         var writer = new OpenXmlPackageWriter(stream, leaveOpen, bufferSize);
-        writer.AddRelationship(new("/ppt/presentation.xml", UriKind.Relative), officeDocumentRelationship, "rId1");
+        writer.AddRelationship(PresentationUri, officeDocumentRelationship, "rId1");
         return writer;
     }
 }

@@ -9,7 +9,7 @@ public sealed class OpenXmlPartEntry : IDisposable
     ZipArchive archive;
     Uri partUri;
     Stream stream;
-    List<(string Id, Uri TargetUri, string RelationshipType, TargetMode TargetMode)>? relationships;
+    List<StoredRelationship>? relationships;
     bool disposed;
     int nextRelId;
 
@@ -43,7 +43,7 @@ public sealed class OpenXmlPartEntry : IDisposable
 
         id ??= "rId" + (++nextRelId).ToString(CultureInfo.InvariantCulture);
 
-        relationships.Add((id, targetUri, relationshipType, targetMode));
+        relationships.Add(new(id, targetUri, relationshipType, targetMode));
         return id;
     }
 
@@ -69,7 +69,7 @@ public sealed class OpenXmlPartEntry : IDisposable
 
     void WriteRelationships()
     {
-        var partPath = partUri.OriginalString.TrimStart('/');
+        var partPath = partUri.OriginalString.AsSpan().TrimStart('/');
         var lastSlash = partPath.LastIndexOf('/');
         string relsPath;
 

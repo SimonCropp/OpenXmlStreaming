@@ -116,7 +116,7 @@ public sealed class StreamingPresentationBuilder :
         }
 
         writer.WritePart(
-            new("/ppt/presentation.xml", UriKind.Relative),
+            StreamingDocument.PresentationUri,
             presentationContentType,
             new Presentation(
                 new SlideMasterIdList(new SlideMasterId
