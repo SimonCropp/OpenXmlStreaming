@@ -97,6 +97,131 @@ var relationship = new PartRelationship(
 <!-- endSnippet -->
 
 
+## High-level builders
+
+The types in the previous section are a thin wrapper around OPC — they give you direct control over parts, relationships, and content types. For common cases that's more plumbing than callers want to write. Three higher-level builders sit on top of `OpenXmlPackageWriter` and handle part URIs, relationship ids, and the main-part composition for you:
+
+ * [`StreamingWorkbookBuilder`](/src/OpenXmlStreaming/StreamingWorkbookBuilder.cs) — `xlsx` workbook with N worksheets.
+ * [`StreamingWordDocumentBuilder`](/src/OpenXmlStreaming/StreamingWordDocumentBuilder.cs) — `docx` with optional styles, numbering, headers, and footers.
+ * [`StreamingPresentationBuilder`](/src/OpenXmlStreaming/StreamingPresentationBuilder.cs) — `pptx` with slides and an auto-generated default theme/master/layout scaffolding.
+
+Each builder inherits the streaming, buffering, and async-disposal behaviour of the underlying `OpenXmlPackageWriter` — parts are written as you add them, only a small list of relationship ids is held in memory between calls, and the final main part is flushed async on `await using` disposal.
+
+### Workbook
+
+<!-- snippet: workbook-builder -->
+<a id='snippet-workbook-builder'></a>
+```cs
+await using var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true);
+
+workbook.AddWorksheet(
+    "Revenue",
+    new S.Worksheet(
+        new S.SheetData(
+            new S.Row(
+                new S.Cell { CellValue = new("Q1"), DataType = S.CellValues.InlineString },
+                new S.Cell { CellValue = new("1000"), DataType = S.CellValues.Number }),
+            new S.Row(
+                new S.Cell { CellValue = new("Q2"), DataType = S.CellValues.InlineString },
+                new S.Cell { CellValue = new("1200"), DataType = S.CellValues.Number }))));
+
+workbook.AddWorksheet(
+    "Expenses",
+    new S.Worksheet(
+        new S.SheetData(
+            new S.Row(
+                new S.Cell { CellValue = new("Rent"), DataType = S.CellValues.InlineString },
+                new S.Cell { CellValue = new("500"), DataType = S.CellValues.Number }))));
+
+// DisposeAsync (triggered by `await using`) writes xl/workbook.xml
+// referencing both sheets — no manual rId wiring.
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L251-L275' title='Snippet source file'>snippet source</a> | <a href='#snippet-workbook-builder' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+The builder generates worksheet URIs (`/xl/worksheets/sheetN.xml`) and matching `rIdN` relationship ids automatically. `DisposeAsync` writes `xl/workbook.xml` referencing every worksheet that was added, in the order they were added.
+
+### Word document
+
+<!-- snippet: word-document-builder -->
+<a id='snippet-word-document-builder'></a>
+```cs
+await using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);
+
+// Add an optional styles part — referenced by paragraphs via StyleId.
+word.AddStyles(new Styles(
+    new Style(
+        new StyleName { Val = "Heading 1" },
+        new BasedOn { Val = "Normal" },
+        new StyleRunProperties(new Bold(), new FontSize { Val = "32" }))
+    {
+        Type = StyleValues.Paragraph,
+        StyleId = "Heading1"
+    }));
+
+// AddFooter returns the relationship id — plug it into SectionProperties
+// in the document body below so the body-level FooterReference resolves.
+var footerId = word.AddFooter(new Footer(
+    new Paragraph(new Run(new Text("— Confidential —")))));
+
+// Last step: write the main document body. The builder wires up all
+// the accumulated sub-part relationships (styles + footer) for you.
+word.WriteDocument(new Document(
+    new Body(
+        new Paragraph(
+            new ParagraphProperties(new ParagraphStyleId { Val = "Heading1" }),
+            new Run(new Text("Quarterly Report"))),
+        new Paragraph(new Run(new Text("Revenue grew 15% year-over-year."))),
+        new SectionProperties(
+            new FooterReference
+            {
+                Type = HeaderFooterValues.Default,
+                Id = footerId
+            }))));
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L283-L316' title='Snippet source file'>snippet source</a> | <a href='#snippet-word-document-builder' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+`AddStyles`/`AddNumbering`/`AddHeader`/`AddFooter` write the sub-part immediately and return the relationship id. For sub-parts that the document body needs to reference by id (`HeaderReference`, `FooterReference`), pass the returned string into the appropriate content element. `WriteDocument` writes the main `word/document.xml` last, with all accumulated relationships wired up — **it is explicit rather than dispose-triggered** because only the caller can produce a body that references the ids the builder hands out.
+
+### Presentation
+
+<!-- snippet: presentation-builder -->
+<a id='snippet-presentation-builder'></a>
+```cs
+await using var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true);
+
+// No theme/master/layout boilerplate — the builder writes a default
+// scaffolding on the first AddSlide call.
+presentation.AddSlide(new P.Slide(
+    new P.CommonSlideData(
+        new P.ShapeTree(
+            new P.NonVisualGroupShapeProperties(
+                new P.NonVisualDrawingProperties { Id = 1, Name = "" },
+                new P.NonVisualGroupShapeDrawingProperties(),
+                new P.ApplicationNonVisualDrawingProperties()),
+            new P.GroupShapeProperties(
+                new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
+
+presentation.AddSlide(new P.Slide(
+    new P.CommonSlideData(
+        new P.ShapeTree(
+            new P.NonVisualGroupShapeProperties(
+                new P.NonVisualDrawingProperties { Id = 1, Name = "" },
+                new P.NonVisualGroupShapeDrawingProperties(),
+                new P.ApplicationNonVisualDrawingProperties()),
+            new P.GroupShapeProperties(
+                new DocumentFormat.OpenXml.Drawing.TransformGroup())))));
+
+// DisposeAsync writes ppt/presentation.xml referencing the slide
+// master and every slide that was added.
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L324-L351' title='Snippet source file'>snippet source</a> | <a href='#snippet-presentation-builder' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+The builder ships with a minimal default theme + slide master + slide layout. They're written lazily on the first `AddSlide` call, so an empty presentation still produces a structurally valid `.pptx`. For a presentation with a custom theme, multiple slide masters, or notes/handout masters, drop down to `OpenXmlPackageWriter` directly and follow the pattern in the migration guide.
+
+
 ## Usage
 
 ### Minimal Word document
@@ -426,7 +551,10 @@ await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
                 },
                 new StyleRunProperties(
                     new Bold(),
-                    new FontSize { Val = "32" }))
+                    new FontSize
+                    {
+                        Val = "32"
+                    }))
             {
                 Type = StyleValues.Paragraph,
                 StyleId = "Heading1"
@@ -458,7 +586,7 @@ await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L70-L125' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L70-L128' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
