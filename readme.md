@@ -165,6 +165,7 @@ workbook.AddWorksheet(
 
 The builder generates worksheet URIs (`/xl/worksheets/sheetN.xml`) and matching `rIdN` relationship ids automatically. `DisposeAsync` writes `xl/workbook.xml` referencing every worksheet that was added, in the order they were added.
 
+
 ### Word document
 
 <!-- snippet: word-document-builder -->
@@ -230,6 +231,7 @@ word.WriteDocument(
 
 `AddStyles`/`AddNumbering`/`AddHeader`/`AddFooter` write the sub-part immediately and return the relationship id. For sub-parts that the document body needs to reference by id (`HeaderReference`, `FooterReference`), pass the returned string into the appropriate content element. `WriteDocument` writes the main `word/document.xml` last, with all accumulated relationships wired up — **it is explicit rather than dispose-triggered** because only the caller can produce a body that references the ids the builder hands out.
 
+
 ### Presentation
 
 <!-- snippet: presentation-builder -->
@@ -279,6 +281,7 @@ The builder ships with a minimal default theme + slide master + slide layout. Th
 
 
 ## Usage
+
 
 ### Minimal Word document
 
@@ -506,6 +509,7 @@ Notes and limitations:
 
 Side-by-side ports of realistic documents from the standard `DocumentFormat.OpenXml` DOM API to `OpenXmlStreaming`. Each pair below produces the same document — the outputs are snapshotted with [Verify.OpenXml](https://github.com/VerifyTests/Verify.OpenXml) in [`MigrationGuide.cs`](/src/OpenXmlStreaming.Tests/MigrationGuide.cs) so both sides are guaranteed to produce valid, structurally identical files.
 
+
 ### General migration pattern
 
  * Replace `using var doc = XxxDocument.Create(...)` with `await using var writer = StreamingDocument.CreateXxx(...)`.
@@ -517,7 +521,8 @@ Side-by-side ports of realistic documents from the standard `DocumentFormat.Open
 
 ### Word — styled document with a separate styles part
 
-Before (standard DOM API):
+
+#### Before (standard DOM API):
 
 <details>
 <summary>Standard `WordprocessingDocument` API</summary>
@@ -579,7 +584,8 @@ using (var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentTyp
 
 </details>
 
-After (low-level `OpenXmlPackageWriter`):
+
+#### After (low-level `OpenXmlPackageWriter`):
 
 <!-- snippet: migration-word-streaming -->
 <a id='snippet-migration-word-streaming'></a>
@@ -645,7 +651,8 @@ await using (var writer = StreamingDocument.CreateWord(stream, leaveOpen: true))
 <sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L70-L128' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-After (high-level `StreamingWordDocumentBuilder`):
+
+#### After (high-level `StreamingWordDocumentBuilder`):
 
 <!-- snippet: migration-word-builder -->
 <a id='snippet-migration-word-builder'></a>
@@ -702,7 +709,8 @@ await using (var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true
 
 ### Spreadsheet — workbook with multiple worksheets
 
-Before (standard DOM API):
+
+#### Before (standard DOM API):
 
 <details>
 <summary>Standard `SpreadsheetDocument` API</summary>
@@ -779,7 +787,8 @@ using (var doc = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Work
 
 </details>
 
-After (low-level `OpenXmlPackageWriter`):
+
+#### After (low-level `OpenXmlPackageWriter`):
 
 <!-- snippet: migration-spreadsheet-streaming -->
 <a id='snippet-migration-spreadsheet-streaming'></a>
@@ -862,7 +871,8 @@ await using (var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen:
 <sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L85-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-After (high-level `StreamingWorkbookBuilder`):
+
+#### After (high-level `StreamingWorkbookBuilder`):
 
 <!-- snippet: migration-spreadsheet-builder -->
 <a id='snippet-migration-spreadsheet-builder'></a>
@@ -921,7 +931,8 @@ await using (var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true
 
 A valid `.pptx` needs a theme, a slide master, and at least one slide layout in addition to the slides themselves. The DOM API wires the relationships between them for you; with the streaming writer every part is written explicitly in dependency order; the high-level builder ships with a default scaffolding so you only think about slides.
 
-Before (standard DOM API):
+
+#### Before (standard DOM API):
 
 <details>
 <summary>Standard `PresentationDocument` API</summary>
@@ -984,7 +995,8 @@ using (var doc = PresentationDocument.Create(stream, PresentationDocumentType.Pr
 
 </details>
 
-After (low-level `OpenXmlPackageWriter`):
+
+#### After (low-level `OpenXmlPackageWriter`):
 
 <details>
 <summary>`OpenXmlPackageWriter` (streaming)</summary>
@@ -1078,7 +1090,8 @@ await using (var writer = StreamingDocument.CreatePresentation(stream, leaveOpen
 
 </details>
 
-After (high-level `StreamingPresentationBuilder`):
+
+#### After (high-level `StreamingPresentationBuilder`):
 
 <!-- snippet: migration-presentation-builder -->
 <a id='snippet-migration-presentation-builder'></a>
