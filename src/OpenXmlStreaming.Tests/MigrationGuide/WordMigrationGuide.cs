@@ -1,9 +1,9 @@
 using DocumentFormat.OpenXml.Wordprocessing;
 
-public partial class MigrationGuide
+public class WordMigrationGuide
 {
     [Test]
-    public async Task WordStandard()
+    public async Task Standard()
     {
         using var stream = new MemoryStream();
 
@@ -63,7 +63,7 @@ public partial class MigrationGuide
     }
 
     [Test]
-    public async Task WordStreaming()
+    public async Task Streaming()
     {
         using var stream = new MemoryStream();
 
@@ -132,7 +132,7 @@ public partial class MigrationGuide
     }
 
     [Test]
-    public async Task WordBuilder()
+    public async Task Builder()
     {
         using var stream = new MemoryStream();
 

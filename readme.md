@@ -580,7 +580,7 @@ using (var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentTyp
                     new Run(new Text("Operating costs held flat.")))));
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L10-L59' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-standard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/WordMigrationGuide.cs#L10-L59' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-standard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -649,7 +649,7 @@ await using (var writer = StreamingDocument.CreateWord(stream, leaveOpen: true))
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L70-L128' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/WordMigrationGuide.cs#L70-L128' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -706,7 +706,7 @@ await using (var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true
                     new Run(new Text("Operating costs held flat."))))));
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L139-L187' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-builder' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/WordMigrationGuide.cs#L139-L187' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-builder' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -785,7 +785,7 @@ using (var doc = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Work
     workbookPart.Workbook = new(sheets);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L10-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-standard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/SpreadsheetMigrationGuide.cs#L10-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-standard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -871,7 +871,7 @@ await using (var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen:
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L85-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/SpreadsheetMigrationGuide.cs#L85-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -926,7 +926,7 @@ await using (var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true
 // xl/workbook.xml referencing every worksheet. No sheet URIs or
 // rIds to track.
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L171-L217' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-builder' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/SpreadsheetMigrationGuide.cs#L171-L217' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-builder' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -993,7 +993,7 @@ using (var doc = PresentationDocument.Create(stream, PresentationDocumentType.Pr
             });
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Presentation.cs#L14-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-standard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/PresentationMigrationGuide.cs#L14-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-standard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -1088,7 +1088,7 @@ await using (var writer = StreamingDocument.CreatePresentation(stream, leaveOpen
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Presentation.cs#L75-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/PresentationMigrationGuide.cs#L75-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -1107,7 +1107,7 @@ await using (var presentation = new StreamingPresentationBuilder(stream, leaveOp
     presentation.AddSlide(BuildTitleSlide("Kickoff"));
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Presentation.cs#L167-L175' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-builder' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide/PresentationMigrationGuide.cs#L167-L175' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-builder' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 

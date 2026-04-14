@@ -1,9 +1,9 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 
-public partial class MigrationGuide
+public class SpreadsheetMigrationGuide
 {
     [Test]
-    public async Task SpreadsheetStandard()
+    public async Task Standard()
     {
         using var stream = new MemoryStream();
 
@@ -78,7 +78,7 @@ public partial class MigrationGuide
     }
 
     [Test]
-    public async Task SpreadsheetStreaming()
+    public async Task Streaming()
     {
         using var stream = new MemoryStream();
 
@@ -164,7 +164,7 @@ public partial class MigrationGuide
     }
 
     [Test]
-    public async Task SpreadsheetBuilder()
+    public async Task Builder()
     {
         using var stream = new MemoryStream();
 

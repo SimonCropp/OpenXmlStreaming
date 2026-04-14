@@ -1,9 +1,9 @@
 using DocumentFormat.OpenXml.Wordprocessing;
 
-public partial class BuilderTests
+public class WordBuilderTests
 {
     [Test]
-    public async Task StreamingWordDocumentBuilder_RoundTrips()
+    public async Task RoundTrips()
     {
         using var stream = new MemoryStream();
 
@@ -71,7 +71,7 @@ public partial class BuilderTests
     }
 
     [Test]
-    public void StreamingWordDocumentBuilder_AddStylesAfterDocument_Throws()
+    public void AddStylesAfterDocument_Throws()
     {
         using var stream = new MemoryStream();
         using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);
@@ -82,7 +82,7 @@ public partial class BuilderTests
     }
 
     [Test]
-    public void StreamingWordDocumentBuilder_DoubleStyles_Throws()
+    public void DoubleStyles_Throws()
     {
         using var stream = new MemoryStream();
         using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);

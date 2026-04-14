@@ -4,10 +4,10 @@ using DocumentFormat.OpenXml.Presentation;
 // be aliased. We default to Presentation and reach for Drawing.* explicitly.
 using Drawing = DocumentFormat.OpenXml.Drawing;
 
-public partial class MigrationGuide
+public class PresentationMigrationGuide
 {
     [Test]
-    public async Task PresentationStandard()
+    public async Task Standard()
     {
         using var stream = new MemoryStream();
 
@@ -68,7 +68,7 @@ public partial class MigrationGuide
     }
 
     [Test]
-    public async Task PresentationStreaming()
+    public async Task Streaming()
     {
         using var stream = new MemoryStream();
 
@@ -160,7 +160,7 @@ public partial class MigrationGuide
     }
 
     [Test]
-    public async Task PresentationBuilder()
+    public async Task Builder()
     {
         using var stream = new MemoryStream();
 
