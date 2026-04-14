@@ -321,6 +321,389 @@ Notes and limitations:
 `Dispose`/`DisposeAsync` finalizes the package: writes `_rels/.rels`, writes `[Content_Types].xml`, disposes the underlying `ZipArchive` (which emits the ZIP central directory), and — on the async path — flushes the remaining buffered bytes to the target via `WriteAsync`.
 
 
+## Migration guide
+
+Side-by-side ports of realistic documents from the standard `DocumentFormat.OpenXml` DOM API to `OpenXmlStreaming`. Each pair below produces the same document — the outputs are snapshotted with [Verify.OpenXml](https://github.com/VerifyTests/Verify.OpenXml) in [`MigrationGuide.cs`](/src/OpenXmlStreaming.Tests/MigrationGuide.cs) so both sides are guaranteed to produce valid, structurally identical files.
+
+### General migration pattern
+
+ * Replace `using var doc = XxxDocument.Create(...)` with `await using var writer = StreamingDocument.CreateXxx(...)`.
+ * Every call to `mainPart.AddNewPart<T>()` plus its property assignment becomes one `writer.WritePart(partUri, contentType, element)` call.
+ * Part-to-part relationships that the DOM wired up for you automatically (e.g. `StyleDefinitionsPart` → main document) become explicit `PartRelationship` entries passed to `WritePart`.
+ * **Write dependencies before the parts that reference them.** Sub-parts first, main part last.
+ * Part URIs are absolute (start with `/`); relationship targets are relative (from the perspective of the owning part's `_rels` file).
+
+
+### Word — styled document with a separate styles part
+
+Before:
+
+<details>
+<summary>Standard `WordprocessingDocument` API</summary>
+
+<!-- snippet: migration-word-standard -->
+<a id='snippet-migration-word-standard'></a>
+```cs
+using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Document))
+{
+    var mainPart = doc.AddMainDocumentPart();
+
+    // Add a styles part through the DOM. The SDK wires the relationship
+    // from the main part to the styles part automatically.
+    var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
+    stylesPart.Styles = new Styles(
+        new Style(
+            new StyleName { Val = "Heading 1" },
+            new BasedOn { Val = "Normal" },
+            new NextParagraphStyle { Val = "Normal" },
+            new W.StyleRunProperties(
+                new W.Bold(),
+                new W.FontSize { Val = "32" }))
+        {
+            Type = StyleValues.Paragraph,
+            StyleId = "Heading1"
+        });
+
+    // Assign the main document body. Paragraphs reference the style by id.
+    mainPart.Document = new Document(
+        new Body(
+            new Paragraph(
+                new ParagraphProperties(
+                    new ParagraphStyleId { Val = "Heading1" }),
+                new W.Run(new W.Text("Quarterly Report"))),
+            new Paragraph(
+                new W.Run(new W.Text("Revenue grew 15% year-over-year."))),
+            new Paragraph(
+                new W.Run(new W.Text("Operating costs held flat.")))));
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L16-L49' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-standard' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+</details>
+
+After:
+
+<!-- snippet: migration-word-streaming -->
+<a id='snippet-migration-word-streaming'></a>
+```cs
+await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
+{
+    // Write the styles part first. Every part is written as a
+    // complete element tree — there's no DOM to mutate later.
+    writer.WritePart(
+        new("/word/styles.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml",
+        new Styles(
+            new Style(
+                new StyleName { Val = "Heading 1" },
+                new BasedOn { Val = "Normal" },
+                new NextParagraphStyle { Val = "Normal" },
+                new W.StyleRunProperties(
+                    new W.Bold(),
+                    new W.FontSize { Val = "32" }))
+            {
+                Type = StyleValues.Paragraph,
+                StyleId = "Heading1"
+            }));
+
+    // Write the main document, declaring its relationship to the
+    // styles part inline via the relationships parameter.
+    writer.WritePart(
+        new("/word/document.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+        new Document(
+            new Body(
+                new Paragraph(
+                    new ParagraphProperties(
+                        new ParagraphStyleId { Val = "Heading1" }),
+                    new W.Run(new W.Text("Quarterly Report"))),
+                new Paragraph(
+                    new W.Run(new W.Text("Revenue grew 15% year-over-year."))),
+                new Paragraph(
+                    new W.Run(new W.Text("Operating costs held flat."))))),
+        [
+            new(
+                new("styles.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+                id: "rId1"),
+        ]);
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L60-L103' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+
+### Spreadsheet — workbook with multiple worksheets
+
+Before:
+
+<details>
+<summary>Standard `SpreadsheetDocument` API</summary>
+
+<!-- snippet: migration-spreadsheet-standard -->
+<a id='snippet-migration-spreadsheet-standard'></a>
+```cs
+using (var doc = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
+{
+    var workbookPart = doc.AddWorkbookPart();
+    var sheets = new S.Sheets();
+
+    // Revenue sheet
+    var revenuePart = workbookPart.AddNewPart<WorksheetPart>();
+    revenuePart.Worksheet = new S.Worksheet(
+        new S.SheetData(
+            new S.Row(
+                InlineString("A1", "Quarter"),
+                InlineString("B1", "Revenue"))
+            { RowIndex = 1 },
+            new S.Row(
+                InlineString("A2", "Q1"),
+                Number("B2", "1000"))
+            { RowIndex = 2 },
+            new S.Row(
+                InlineString("A3", "Q2"),
+                Number("B3", "1200"))
+            { RowIndex = 3 }));
+    sheets.AppendChild(new S.Sheet
+    {
+        Name = "Revenue",
+        SheetId = 1,
+        Id = workbookPart.GetIdOfPart(revenuePart)
+    });
+
+    // Expenses sheet
+    var expensesPart = workbookPart.AddNewPart<WorksheetPart>();
+    expensesPart.Worksheet = new S.Worksheet(
+        new S.SheetData(
+            new S.Row(
+                InlineString("A1", "Category"),
+                InlineString("B1", "Amount"))
+            { RowIndex = 1 },
+            new S.Row(
+                InlineString("A2", "Rent"),
+                Number("B2", "500"))
+            { RowIndex = 2 }));
+    sheets.AppendChild(new S.Sheet
+    {
+        Name = "Expenses",
+        SheetId = 2,
+        Id = workbookPart.GetIdOfPart(expensesPart)
+    });
+
+    workbookPart.Workbook = new S.Workbook(sheets);
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L116-L166' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-standard' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+</details>
+
+After:
+
+<!-- snippet: migration-spreadsheet-streaming -->
+<a id='snippet-migration-spreadsheet-streaming'></a>
+```cs
+await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: true))
+{
+    // Worksheets are written first — the workbook references them by id.
+    writer.WritePart(
+        new("/xl/worksheets/sheet1.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
+        new S.Worksheet(
+            new S.SheetData(
+                new S.Row(
+                    InlineString("A1", "Quarter"),
+                    InlineString("B1", "Revenue"))
+                { RowIndex = 1 },
+                new S.Row(
+                    InlineString("A2", "Q1"),
+                    Number("B2", "1000"))
+                { RowIndex = 2 },
+                new S.Row(
+                    InlineString("A3", "Q2"),
+                    Number("B3", "1200"))
+                { RowIndex = 3 })));
+
+    writer.WritePart(
+        new("/xl/worksheets/sheet2.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
+        new S.Worksheet(
+            new S.SheetData(
+                new S.Row(
+                    InlineString("A1", "Category"),
+                    InlineString("B1", "Amount"))
+                { RowIndex = 1 },
+                new S.Row(
+                    InlineString("A2", "Rent"),
+                    Number("B2", "500"))
+                { RowIndex = 2 })));
+
+    // Then the workbook, with a relationship per worksheet.
+    writer.WritePart(
+        new("/xl/workbook.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
+        new S.Workbook(
+            new S.Sheets(
+                new S.Sheet { Name = "Revenue", SheetId = 1, Id = "rId1" },
+                new S.Sheet { Name = "Expenses", SheetId = 2, Id = "rId2" })),
+        [
+            new(
+                new("worksheets/sheet1.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+                id: "rId1"),
+            new(
+                new("worksheets/sheet2.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+                id: "rId2"),
+        ]);
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L177-L232' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+
+### Presentation — title slide with slide master, layout, and theme
+
+A valid `.pptx` needs a theme, a slide master, and at least one slide layout in addition to the slides themselves. The DOM API wires the relationships between them for you; with the streaming writer every part is written explicitly in dependency order.
+
+Before:
+
+<details>
+<summary>Standard `PresentationDocument` API</summary>
+
+<!-- snippet: migration-presentation-standard -->
+<a id='snippet-migration-presentation-standard'></a>
+```cs
+using (var doc = PresentationDocument.Create(ms, PresentationDocumentType.Presentation))
+{
+    var presentationPart = doc.AddPresentationPart();
+    presentationPart.Presentation = new P.Presentation();
+
+    // Slide master + theme + layout are required scaffolding for
+    // any presentation with real slides. AddNewPart wires the
+    // relationships between them automatically.
+    var slideMasterPart = presentationPart.AddNewPart<SlideMasterPart>();
+    slideMasterPart.SlideMaster = BuildSlideMaster();
+
+    var themePart = slideMasterPart.AddNewPart<ThemePart>();
+    themePart.Theme = BuildTheme();
+
+    var slideLayoutPart = slideMasterPart.AddNewPart<SlideLayoutPart>();
+    slideLayoutPart.SlideLayout = BuildSlideLayout();
+
+    // Slide 1 — title slide referencing the layout.
+    var slidePart = presentationPart.AddNewPart<SlidePart>();
+    slidePart.AddPart(slideLayoutPart);
+    slidePart.Slide = BuildTitleSlide("Kickoff");
+
+    // Stitch the presentation's lists together using relationship ids
+    // the SDK generated when AddNewPart was called.
+    presentationPart.Presentation = new P.Presentation(
+        new P.SlideMasterIdList(new P.SlideMasterId
+        {
+            Id = 2147483648U,
+            RelationshipId = presentationPart.GetIdOfPart(slideMasterPart)
+        }),
+        new P.SlideIdList(new P.SlideId
+        {
+            Id = 256U,
+            RelationshipId = presentationPart.GetIdOfPart(slidePart)
+        }),
+        new P.SlideSize { Cx = 9144000, Cy = 6858000 },
+        new P.NotesSize { Cx = 6858000, Cy = 9144000 });
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L261-L300' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-standard' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+</details>
+
+After:
+
+<details>
+<summary>`OpenXmlPackageWriter` (streaming)</summary>
+
+<!-- snippet: migration-presentation-streaming -->
+<a id='snippet-migration-presentation-streaming'></a>
+```cs
+await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: true))
+{
+    // Theme — referenced from the slide master.
+    writer.WritePart(
+        new("/ppt/theme/theme1.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.theme+xml",
+        BuildTheme());
+
+    // Slide layout — referenced from the slide master AND each slide.
+    writer.WritePart(
+        new("/ppt/slideLayouts/slideLayout1.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml",
+        BuildSlideLayout());
+
+    // Slide master — references the theme and the layout.
+    writer.WritePart(
+        new("/ppt/slideMasters/slideMaster1.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml",
+        BuildSlideMaster(),
+        [
+            new(
+                new("../theme/theme1.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme",
+                id: "rId1"),
+            new(
+                new("../slideLayouts/slideLayout1.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout",
+                id: "rId2"),
+        ]);
+
+    // Slide — references its layout.
+    writer.WritePart(
+        new("/ppt/slides/slide1.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.presentationml.slide+xml",
+        BuildTitleSlide("Kickoff"),
+        [
+            new(
+                new("../slideLayouts/slideLayout1.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout",
+                id: "rId1"),
+        ]);
+
+    // presentation.xml — references the slide master and the slide.
+    writer.WritePart(
+        new("/ppt/presentation.xml", UriKind.Relative),
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
+        new P.Presentation(
+            new P.SlideMasterIdList(new P.SlideMasterId
+            {
+                Id = 2147483648U,
+                RelationshipId = "rId1"
+            }),
+            new P.SlideIdList(new P.SlideId
+            {
+                Id = 256U,
+                RelationshipId = "rId2"
+            }),
+            new P.SlideSize { Cx = 9144000, Cy = 6858000 },
+            new P.NotesSize { Cx = 6858000, Cy = 9144000 }),
+        [
+            new(
+                new("slideMasters/slideMaster1.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster",
+                id: "rId1"),
+            new(
+                new("slides/slide1.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
+                id: "rId2"),
+        ]);
+}
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L311-L382' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+</details>
+
+
 ## Benchmarks
 
 Measured on .NET 10.0 with `BenchmarkDotNet` + `MemoryDiagnoser`. Source in [`src/OpenXmlStreaming.Benchmarks`](/src/OpenXmlStreaming.Benchmarks). Run with:
