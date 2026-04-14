@@ -10,5 +10,6 @@
     <File Path="nuget.config" />
   </Folder>
   <Project Path="OpenXmlStreaming\OpenXmlStreaming.csproj" />
+  <Project Path="OpenXmlStreaming.Benchmarks\OpenXmlStreaming.Benchmarks.csproj" />
   <Project Path="OpenXmlStreaming.Tests\OpenXmlStreaming.Tests.csproj" />
 </Solution>
