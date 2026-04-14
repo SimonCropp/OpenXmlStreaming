@@ -135,8 +135,8 @@ Used with `WritePart` to declare part-level relationships inline.
 new PartRelationship(
     targetUri: new Uri("styles.xml", UriKind.Relative),
     relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-    targetMode: TargetMode.Internal, // default
-    id: "rId1") // optional, auto-generated if null
+    id: "rId1", // required — referenced from the part body
+    targetMode: TargetMode.Internal) // default
 ```
 
 ## Key Behaviors

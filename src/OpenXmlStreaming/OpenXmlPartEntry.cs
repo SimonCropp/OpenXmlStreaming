@@ -9,7 +9,7 @@ public sealed class OpenXmlPartEntry : IDisposable
     ZipArchive archive;
     Uri partUri;
     Stream stream;
-    List<StoredRelationship>? relationships;
+    List<PartRelationship>? relationships;
     bool disposed;
     int nextRelId;
 
@@ -43,7 +43,7 @@ public sealed class OpenXmlPartEntry : IDisposable
 
         id ??= "rId" + (++nextRelId).ToString(CultureInfo.InvariantCulture);
 
-        relationships.Add(new(id, targetUri, relationshipType, targetMode));
+        relationships.Add(new(targetUri, relationshipType, id, targetMode));
         return id;
     }
 
@@ -69,24 +69,25 @@ public sealed class OpenXmlPartEntry : IDisposable
 
     void WriteRelationships()
     {
-        var partPath = partUri.OriginalString.AsSpan().TrimStart('/');
-        var lastSlash = partPath.LastIndexOf('/');
-        string relsPath;
-
-        if (lastSlash >= 0)
-        {
-            var dir = partPath[..(lastSlash + 1)];
-            var file = partPath[(lastSlash + 1)..];
-            relsPath = string.Concat(dir, "_rels/", file, ".rels");
-        }
-        else
-        {
-            relsPath = string.Concat("_rels/", partPath, ".rels");
-        }
+        var relsPath = GetRelsPath();
 
         var relsEntry = archive.CreateEntry(relsPath, CompressionLevel.Optimal);
         using var relsStream = relsEntry.Open();
         OpenXmlPackageWriter.WriteRelationshipsXml(relsStream, relationships!);
+    }
+
+    string GetRelsPath()
+    {
+        var partPath = partUri.OriginalString.AsSpan().TrimStart('/');
+        var lastSlash = partPath.LastIndexOf('/');
+
+        if (lastSlash == -1)
+        {
+            return string.Concat("_rels/", partPath, ".rels");
+        }
+        var dir = partPath[..(lastSlash + 1)];
+        var file = partPath[(lastSlash + 1)..];
+        return string.Concat(dir, "_rels/", file, ".rels");
     }
 
     void ThrowIfDisposed()

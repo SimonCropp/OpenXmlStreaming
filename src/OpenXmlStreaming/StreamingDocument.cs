@@ -8,8 +8,6 @@ public static class StreamingDocument
     const string officeDocumentRelationship = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";
 
     internal static readonly Uri WordDocumentUri = new("/word/document.xml", UriKind.Relative);
-    internal static readonly Uri SpreadsheetWorkbookUri = new("/xl/workbook.xml", UriKind.Relative);
-    internal static readonly Uri PresentationUri = new("/ppt/presentation.xml", UriKind.Relative);
 
     /// <summary>
     /// Creates a forward-only writer for a Word document directly against the given stream.
@@ -21,6 +19,8 @@ public static class StreamingDocument
         return writer;
     }
 
+    internal static readonly Uri SpreadsheetWorkbookUri = new("/xl/workbook.xml", UriKind.Relative);
+
     /// <summary>
     /// Creates a forward-only writer for a Spreadsheet document directly against the given stream.
     /// </summary>
@@ -30,6 +30,8 @@ public static class StreamingDocument
         writer.AddRelationship(SpreadsheetWorkbookUri, officeDocumentRelationship, "rId1");
         return writer;
     }
+
+    internal static readonly Uri PresentationUri = new("/ppt/presentation.xml", UriKind.Relative);
 
     /// <summary>
     /// Creates a forward-only writer for a Presentation document directly against the given stream.

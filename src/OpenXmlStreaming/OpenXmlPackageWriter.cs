@@ -25,7 +25,7 @@ public sealed class OpenXmlPackageWriter :
     BufferedWriteStream? bufferedStream;
     ZipArchive archive;
     List<(Uri PartUri, string ContentType)> contentTypes = [];
-    List<StoredRelationship> relationships = [];
+    List<PartRelationship> relationships = [];
     HashSet<string> writtenParts = new(StringComparer.OrdinalIgnoreCase);
     OpenXmlPartEntry? currentEntry;
     bool finished;
@@ -67,7 +67,7 @@ public sealed class OpenXmlPackageWriter :
 
         id ??= "rId" + (++nextRelId).ToString(CultureInfo.InvariantCulture);
 
-        relationships.Add(new(id, partUri, relationshipType, TargetMode.Internal));
+        relationships.Add(new(partUri, relationshipType, id, TargetMode.Internal));
         return id;
     }
 
@@ -205,7 +205,7 @@ public sealed class OpenXmlPackageWriter :
         WriteRelationshipsXml(stream, relationships);
     }
 
-    internal static void WriteRelationshipsXml(Stream stream, List<StoredRelationship> relationships)
+    internal static void WriteRelationshipsXml(Stream stream, List<PartRelationship> relationships)
     {
         using var writer = XmlWriter.Create(stream, xmlSettings);
 

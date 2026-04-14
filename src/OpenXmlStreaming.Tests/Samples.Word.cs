@@ -111,10 +111,11 @@ public partial class Samples
         var relationship = new PartRelationship(
             targetUri: new("styles.xml", UriKind.Relative),
             relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+            // required — the part body almost always references its own
+            // relationships by id, so the caller must know it up front
+            id: "rId1",
             // default
-            targetMode: TargetMode.Internal,
-            // optional, auto-generated if null
-            id: "rId1");
+            targetMode: TargetMode.Internal);
         // end-snippet
 
         _ = relationship;

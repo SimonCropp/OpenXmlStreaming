@@ -88,12 +88,13 @@ A struct passed to `WritePart` to declare part-level relationships inline:
 var relationship = new PartRelationship(
     targetUri: new("styles.xml", UriKind.Relative),
     relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+    // required — the part body almost always references its own
+    // relationships by id, so the caller must know it up front
+    id: "rId1",
     // default
-    targetMode: TargetMode.Internal,
-    // optional, auto-generated if null
-    id: "rId1");
+    targetMode: TargetMode.Internal);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L110-L118' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L110-L119' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -226,7 +227,7 @@ word.WriteDocument(
                     Id = footerId
                 }))));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L164-L219' title='Snippet source file'>snippet source</a> | <a href='#snippet-word-document-builder' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L165-L220' title='Snippet source file'>snippet source</a> | <a href='#snippet-word-document-builder' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `AddStyles`/`AddNumbering`/`AddHeader`/`AddFooter` write the sub-part immediately and return the relationship id. For sub-parts that the document body needs to reference by id (`HeaderReference`, `FooterReference`), pass the returned string into the appropriate content element. `WriteDocument` writes the main `word/document.xml` last, with all accumulated relationships wired up — **it is explicit rather than dispose-triggered** because only the caller can produce a body that references the ids the builder hands out.
@@ -431,7 +432,7 @@ writer.WritePart(
 // the final buffer — including the ZIP central directory — so remote
 // sinks like SQL BLOB streams don't block the thread on network I/O.
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L128-L139' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L129-L140' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Internally the writer wraps the target stream in a fixed-size buffer (default 80 KB). `ZipArchive` writes into the buffer synchronously as parts are produced; the buffer only hits the target stream when it fills, which batches many small deflate writes into a few larger ones. On `DisposeAsync`, the final buffer — which always contains the ZIP central directory and any trailing metadata — is pushed to the target via `Stream.WriteAsync`, so the calling thread is not blocked on the final network write.
@@ -450,7 +451,7 @@ using var writer = new OpenXmlPackageWriter(
     // 1 MB
     bufferSize: 1024 * 1024);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L147-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.Word.cs#L148-L157' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `bufferSize: 0` disables buffering and writes directly to the target. This also disables async flushing on `DisposeAsync` — there's nothing left to flush — so use it only when the target is already a local/in-memory stream where the extra copy isn't worth it.

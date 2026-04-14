@@ -398,7 +398,7 @@ public class OpenXmlPackageWriterTests
     public void PartRelationship_Properties()
     {
         var uri = new Uri("foo.xml", UriKind.Relative);
-        var rel = new PartRelationship(uri, "type", TargetMode.External, "rId1");
+        var rel = new PartRelationship(uri, "type", "rId1", TargetMode.External);
         Assert.That(rel.TargetUri, Is.EqualTo(uri));
         Assert.That(rel.RelationshipType, Is.EqualTo("type"));
         Assert.That(rel.TargetMode, Is.EqualTo(TargetMode.External));
@@ -406,11 +406,10 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
-    public void PartRelationship_DefaultValues()
+    public void PartRelationship_DefaultTargetMode()
     {
-        var rel = new PartRelationship(new("foo.xml", UriKind.Relative), "type");
+        var rel = new PartRelationship(new("foo.xml", UriKind.Relative), "type", "rId1");
         Assert.That(rel.TargetMode, Is.EqualTo(TargetMode.Internal));
-        Assert.That(rel.Id, Is.Null);
     }
 
     [Test]
