@@ -91,7 +91,10 @@ public partial class MigrationGuide
                         },
                         new StyleRunProperties(
                             new Bold(),
-                            new FontSize { Val = "32" }))
+                            new FontSize
+                            {
+                                Val = "32"
+                            }))
                     {
                         Type = StyleValues.Paragraph,
                         StyleId = "Heading1"
