@@ -15,7 +15,11 @@ namespace OpenXmlStreaming;
 /// of <c>(name, uri, relationship id)</c> tuples — one per worksheet — so the
 /// builder inherits the streaming behaviour of <see cref="OpenXmlPackageWriter"/>.
 /// </remarks>
-public sealed class StreamingWorkbookBuilder :
+/// <inheritdoc cref="OpenXmlPackageWriter(Stream, bool, int)"/>
+public sealed class StreamingWorkbookBuilder(
+    Stream stream,
+    bool leaveOpen = false,
+    int bufferSize = OpenXmlPackageWriter.DefaultBufferSize) :
     IAsyncDisposable,
     IDisposable
 {
@@ -23,16 +27,9 @@ public sealed class StreamingWorkbookBuilder :
     const string worksheetContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml";
     const string workbookContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml";
 
-    readonly OpenXmlPackageWriter writer;
-    readonly List<(string Name, string Target, string RelId)> worksheets = [];
+    OpenXmlPackageWriter writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen, bufferSize);
+    List<(string Name, string Target, string RelId)> worksheets = [];
     bool finished;
-
-    /// <inheritdoc cref="OpenXmlPackageWriter(Stream, bool, int)"/>
-    public StreamingWorkbookBuilder(
-        Stream stream,
-        bool leaveOpen = false,
-        int bufferSize = OpenXmlPackageWriter.DefaultBufferSize) =>
-        writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen, bufferSize);
 
     /// <summary>
     /// Writes a worksheet part to the package and records it for inclusion in
@@ -63,7 +60,7 @@ public sealed class StreamingWorkbookBuilder :
     /// Called automatically by <see cref="Dispose"/>/<see cref="DisposeAsync"/>;
     /// no further <see cref="AddWorksheet"/> calls are allowed after this.
     /// </summary>
-    internal void Finish()
+    void Finish()
     {
         if (finished)
         {
@@ -78,12 +75,13 @@ public sealed class StreamingWorkbookBuilder :
         for (var i = 0; i < worksheets.Count; i++)
         {
             var (name, target, relId) = worksheets[i];
-            sheetsElement.AppendChild(new Sheet
-            {
-                Name = name,
-                SheetId = (uint)(i + 1),
-                Id = relId
-            });
+            sheetsElement.AppendChild(
+                new Sheet
+                {
+                    Name = name,
+                    SheetId = (uint) (i + 1),
+                    Id = relId
+                });
             relationships.Add(
                 new(
                     new(target, UriKind.Relative),

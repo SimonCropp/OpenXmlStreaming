@@ -18,7 +18,11 @@ namespace OpenXmlStreaming;
 /// notes/handout masters, drop down to <see cref="OpenXmlPackageWriter"/> directly
 /// and use the pattern shown in the migration guide.
 /// </remarks>
-public sealed class StreamingPresentationBuilder :
+/// <inheritdoc cref="OpenXmlPackageWriter(Stream, bool, int)"/>
+public sealed class StreamingPresentationBuilder(
+    Stream stream,
+    bool leaveOpen = false,
+    int bufferSize = OpenXmlPackageWriter.DefaultBufferSize) :
     IAsyncDisposable,
     IDisposable
 {
@@ -32,17 +36,12 @@ public sealed class StreamingPresentationBuilder :
     const string themeContentType = "application/vnd.openxmlformats-officedocument.theme+xml";
     const string presentationContentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml";
 
-    readonly OpenXmlPackageWriter writer;
-    readonly List<(string RelId, uint SlideId)> slides = [];
+    OpenXmlPackageWriter writer = StreamingDocument.CreatePresentation(stream, leaveOpen, bufferSize);
+    List<(string RelId, uint SlideId)> slides = [];
     bool scaffoldingWritten;
     bool finished;
 
-    /// <inheritdoc cref="OpenXmlPackageWriter(Stream, bool, int)"/>
-    public StreamingPresentationBuilder(
-        Stream stream,
-        bool leaveOpen = false,
-        int bufferSize = OpenXmlPackageWriter.DefaultBufferSize) =>
-        writer = StreamingDocument.CreatePresentation(stream, leaveOpen, bufferSize);
+    static Uri slideLayoutTargetFromSlide = new("../slideLayouts/slideLayout1.xml", UriKind.Relative);
 
     /// <summary>
     /// Writes a slide part to the package and records it for inclusion in the
@@ -57,8 +56,8 @@ public sealed class StreamingPresentationBuilder :
         EnsureScaffolding();
 
         var index = slides.Count + 1;
-        var fileName = "slide" + index.ToString(CultureInfo.InvariantCulture) + ".xml";
-        var partUri = "/ppt/slides/" + fileName;
+        var indexString = index.ToString(CultureInfo.InvariantCulture);
+        var partUri = $"/ppt/slides/slide{indexString}.xml";
 
         writer.WritePart(
             new(partUri, UriKind.Relative),
@@ -66,15 +65,17 @@ public sealed class StreamingPresentationBuilder :
             slide,
             [
                 new(
-                    new("../slideLayouts/slideLayout1.xml", UriKind.Relative),
+                    slideLayoutTargetFromSlide,
                     slideLayoutRelType,
                     id: "rId1"),
             ]);
 
         // Slide ids in the presentation's SlideIdList must be >= 256 and unique.
-        var slideRelId = "slide" + index.ToString(CultureInfo.InvariantCulture);
+        var slideRelId = "slide" + indexString;
         slides.Add((slideRelId, 256U + (uint)(index - 1)));
     }
+
+    static Uri slideMasterTargetFromPresentation = new("slideMasters/slideMaster1.xml", UriKind.Relative);
 
     /// <summary>
     /// Writes <c>ppt/presentation.xml</c> referencing every slide and the slide
@@ -94,7 +95,7 @@ public sealed class StreamingPresentationBuilder :
         var relationships = new List<PartRelationship>(slides.Count + 1)
         {
             new(
-                new("slideMasters/slideMaster1.xml", UriKind.Relative),
+                slideMasterTargetFromPresentation,
                 slideMasterRelType,
                 id: "master"),
         };
@@ -102,15 +103,15 @@ public sealed class StreamingPresentationBuilder :
         for (var i = 0; i < slides.Count; i++)
         {
             var (relId, slideId) = slides[i];
-            var fileName = "slide" + (i + 1).ToString(CultureInfo.InvariantCulture) + ".xml";
-            slideIdList.AppendChild(new SlideId
-            {
-                Id = slideId,
-                RelationshipId = relId
-            });
+            slideIdList.AppendChild(
+                new SlideId
+                {
+                    Id = slideId,
+                    RelationshipId = relId
+                });
             relationships.Add(
                 new(
-                    new("slides/" + fileName, UriKind.Relative),
+                    new($"slides/slide{(i + 1).ToString(CultureInfo.InvariantCulture)}.xml", UriKind.Relative),
                     slideRelType,
                     id: relId));
         }
@@ -119,11 +120,12 @@ public sealed class StreamingPresentationBuilder :
             StreamingDocument.PresentationUri,
             presentationContentType,
             new Presentation(
-                new SlideMasterIdList(new SlideMasterId
-                {
-                    Id = 2147483648U,
-                    RelationshipId = "master"
-                }),
+                new SlideMasterIdList(
+                    new SlideMasterId
+                    {
+                        Id = 2147483648U,
+                        RelationshipId = "master"
+                    }),
                 slideIdList,
                 new SlideSize
                 {

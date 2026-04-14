@@ -17,7 +17,11 @@ namespace OpenXmlStreaming;
 /// can actually reference the header/footer ids the builder hands out, so the
 /// caller has to produce it.
 /// </remarks>
-public sealed class StreamingWordDocumentBuilder :
+/// <inheritdoc cref="OpenXmlPackageWriter(Stream, bool, int)"/>
+public sealed class StreamingWordDocumentBuilder(
+    Stream stream,
+    bool leaveOpen = false,
+    int bufferSize = OpenXmlPackageWriter.DefaultBufferSize) :
     IAsyncDisposable,
     IDisposable
 {
@@ -31,21 +35,14 @@ public sealed class StreamingWordDocumentBuilder :
     const string footerContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml";
     const string documentContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
 
-    readonly OpenXmlPackageWriter writer;
-    readonly List<PartRelationship> documentRelationships = [];
+    OpenXmlPackageWriter writer = StreamingDocument.CreateWord(stream, leaveOpen, bufferSize);
+    List<PartRelationship> documentRelationships = [];
     int nextRelIndex;
     int nextHeaderIndex;
     int nextFooterIndex;
     bool stylesAdded;
     bool numberingAdded;
     bool documentWritten;
-
-    /// <inheritdoc cref="OpenXmlPackageWriter(Stream, bool, int)"/>
-    public StreamingWordDocumentBuilder(
-        Stream stream,
-        bool leaveOpen = false,
-        int bufferSize = OpenXmlPackageWriter.DefaultBufferSize) =>
-        writer = StreamingDocument.CreateWord(stream, leaveOpen, bufferSize);
 
     /// <summary>
     /// Writes <c>word/styles.xml</c> and records the relationship from the main
