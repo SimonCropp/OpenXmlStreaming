@@ -63,7 +63,7 @@ using var word = StreamingDocument.CreateWord(stream, leaveOpen: true);
 using var spreadsheet = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
 using var presentation = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L144-L152' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L145-L153' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 | Method | Description |
@@ -93,7 +93,7 @@ var relationship = new PartRelationship(
     // optional, auto-generated if null
     id: "rId1");
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L158-L166' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L159-L167' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -116,7 +116,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
     new Document(new Body(new Paragraph(new Run(new Text("Hello!"))))));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L12-L24' title='Snippet source file'>snippet source</a> | <a href='#snippet-minimal-word' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L13-L25' title='Snippet source file'>snippet source</a> | <a href='#snippet-minimal-word' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -134,7 +134,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
     new Document(new Body(new Paragraph(new Run(new Text("Forward-only!"))))));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L32-L39' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-document-factory' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L33-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-document-factory' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `CreateSpreadsheet` and `CreatePresentation` are also provided.
@@ -159,7 +159,7 @@ xmlWriter.WriteElement(new Paragraph(new Run(new Text("Streamed!"))));
 xmlWriter.WriteEndElement();
 xmlWriter.WriteEndElement();
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L53-L65' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-part-content' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L54-L66' title='Snippet source file'>snippet source</a> | <a href='#snippet-streaming-part-content' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Only one part may be open at a time. Creating a new part or disposing the writer automatically closes the current part.
@@ -190,7 +190,7 @@ writer.WritePart(
             id: "rId1")
     ]);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L74-L92' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L75-L93' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationships' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 External relationships (e.g. hyperlinks) are written by passing `TargetMode.External`:
@@ -204,7 +204,7 @@ entry.AddRelationship(
     TargetMode.External,
     "rId1");
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L115-L121' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L116-L122' title='Snippet source file'>snippet source</a> | <a href='#snippet-external-relationship' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -220,7 +220,7 @@ writer.WritePart(
     "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
     new P.Presentation(new P.SlideIdList()));
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L129-L136' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L130-L137' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-presentation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -247,7 +247,7 @@ writer.WritePart(
 // the final buffer — including the ZIP central directory — so remote
 // sinks like SQL BLOB streams don't block the thread on network I/O.
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L176-L187' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L177-L188' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Internally the writer wraps the target stream in a fixed-size buffer (default 80 KB). `ZipArchive` writes into the buffer synchronously as parts are produced; the buffer only hits the target stream when it fills, which batches many small deflate writes into a few larger ones. On `DisposeAsync`, the final buffer — which always contains the ZIP central directory and any trailing metadata — is pushed to the target via `Stream.WriteAsync`, so the calling thread is not blocked on the final network write.
@@ -266,7 +266,7 @@ using var writer = new OpenXmlPackageWriter(
     // 1 MB
     bufferSize: 1024 * 1024);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L195-L204' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L196-L205' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `bufferSize: 0` disables buffering and writes directly to the target. This also disables async flushing on `DisposeAsync` — there's nothing left to flush — so use it only when the target is already a local/in-memory stream where the extra copy isn't worth it.
@@ -304,7 +304,7 @@ writer.WritePart(
             id: "rId1"),
     ]);
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L214-L242' title='Snippet source file'>snippet source</a> | <a href='#snippet-flush-async' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L215-L243' title='Snippet source file'>snippet source</a> | <a href='#snippet-flush-async' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `FlushAsync` pushes whatever is currently sitting in the internal buffer to the target stream via `WriteAsync`. It's a no-op when the buffer is empty or when the writer is unbuffered (`bufferSize: 0`). It does **not** eliminate sync writes that spill from inside a single `WritePart` call when the part is larger than the buffer — those are an inherent consequence of `ZipArchive`'s sync write surface and the only mitigation is a bigger buffer.
@@ -351,33 +351,49 @@ using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Do
     // Add a styles part through the DOM. The SDK wires the relationship
     // from the main part to the styles part automatically.
     var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-    stylesPart.Styles = new Styles(
+    stylesPart.Styles = new(
         new Style(
-            new StyleName { Val = "Heading 1" },
-            new BasedOn { Val = "Normal" },
-            new NextParagraphStyle { Val = "Normal" },
-            new W.StyleRunProperties(
-                new W.Bold(),
-                new W.FontSize { Val = "32" }))
+            new StyleName
+            {
+                Val = "Heading 1"
+            },
+            new BasedOn
+            {
+                Val = "Normal"
+            },
+            new NextParagraphStyle
+            {
+                Val = "Normal"
+            },
+            new StyleRunProperties(
+                new Bold(),
+                new FontSize
+                {
+                    Val = "32"
+                }))
         {
             Type = StyleValues.Paragraph,
             StyleId = "Heading1"
         });
 
     // Assign the main document body. Paragraphs reference the style by id.
-    mainPart.Document = new Document(
+    mainPart.Document =
+        new(
         new Body(
             new Paragraph(
                 new ParagraphProperties(
-                    new ParagraphStyleId { Val = "Heading1" }),
-                new W.Run(new W.Text("Quarterly Report"))),
+                    new ParagraphStyleId
+                    {
+                        Val = "Heading1"
+                    }),
+                new Run(new Text("Quarterly Report"))),
             new Paragraph(
-                new W.Run(new W.Text("Revenue grew 15% year-over-year."))),
+                new Run(new Text("Revenue grew 15% year-over-year."))),
             new Paragraph(
-                new W.Run(new W.Text("Operating costs held flat.")))));
+                new Run(new Text("Operating costs held flat.")))));
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L16-L49' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-standard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L10-L59' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-standard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -396,12 +412,21 @@ await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
         "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml",
         new Styles(
             new Style(
-                new StyleName { Val = "Heading 1" },
-                new BasedOn { Val = "Normal" },
-                new NextParagraphStyle { Val = "Normal" },
-                new W.StyleRunProperties(
-                    new W.Bold(),
-                    new W.FontSize { Val = "32" }))
+                new StyleName
+                {
+                    Val = "Heading 1"
+                },
+                new BasedOn
+                {
+                    Val = "Normal"
+                },
+                new NextParagraphStyle
+                {
+                    Val = "Normal"
+                },
+                new StyleRunProperties(
+                    new Bold(),
+                    new FontSize { Val = "32" }))
             {
                 Type = StyleValues.Paragraph,
                 StyleId = "Heading1"
@@ -416,12 +441,15 @@ await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
             new Body(
                 new Paragraph(
                     new ParagraphProperties(
-                        new ParagraphStyleId { Val = "Heading1" }),
-                    new W.Run(new W.Text("Quarterly Report"))),
+                        new ParagraphStyleId
+                        {
+                            Val = "Heading1"
+                        }),
+                    new Run(new Text("Quarterly Report"))),
                 new Paragraph(
-                    new W.Run(new W.Text("Revenue grew 15% year-over-year."))),
+                    new Run(new Text("Revenue grew 15% year-over-year."))),
                 new Paragraph(
-                    new W.Run(new W.Text("Operating costs held flat."))))),
+                    new Run(new Text("Operating costs held flat."))))),
         [
             new(
                 new("styles.xml", UriKind.Relative),
@@ -430,7 +458,7 @@ await using (var writer = StreamingDocument.CreateWord(ms, leaveOpen: true))
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L60-L103' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Word.cs#L70-L125' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-word-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -447,54 +475,68 @@ Before:
 using (var doc = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
 {
     var workbookPart = doc.AddWorkbookPart();
-    var sheets = new S.Sheets();
+    var sheets = new Sheets();
 
     // Revenue sheet
     var revenuePart = workbookPart.AddNewPart<WorksheetPart>();
-    revenuePart.Worksheet = new S.Worksheet(
-        new S.SheetData(
-            new S.Row(
-                InlineString("A1", "Quarter"),
-                InlineString("B1", "Revenue"))
-            { RowIndex = 1 },
-            new S.Row(
-                InlineString("A2", "Q1"),
-                Number("B2", "1000"))
-            { RowIndex = 2 },
-            new S.Row(
-                InlineString("A3", "Q2"),
-                Number("B3", "1200"))
-            { RowIndex = 3 }));
-    sheets.AppendChild(new S.Sheet
-    {
-        Name = "Revenue",
-        SheetId = 1,
-        Id = workbookPart.GetIdOfPart(revenuePart)
-    });
+    revenuePart.Worksheet =
+        new(
+            new SheetData(
+                new Row(
+                    InlineString("A1", "Quarter"),
+                    InlineString("B1", "Revenue"))
+                {
+                    RowIndex = 1
+                },
+                new Row(
+                    InlineString("A2", "Q1"),
+                    Number("B2", "1000"))
+                {
+                    RowIndex = 2
+                },
+                new Row(
+                    InlineString("A3", "Q2"),
+                    Number("B3", "1200"))
+                {
+                    RowIndex = 3
+                }));
+    sheets.AppendChild(
+        new Sheet
+        {
+            Name = "Revenue",
+            SheetId = 1,
+            Id = workbookPart.GetIdOfPart(revenuePart)
+        });
 
     // Expenses sheet
     var expensesPart = workbookPart.AddNewPart<WorksheetPart>();
-    expensesPart.Worksheet = new S.Worksheet(
-        new S.SheetData(
-            new S.Row(
-                InlineString("A1", "Category"),
-                InlineString("B1", "Amount"))
-            { RowIndex = 1 },
-            new S.Row(
-                InlineString("A2", "Rent"),
-                Number("B2", "500"))
-            { RowIndex = 2 }));
-    sheets.AppendChild(new S.Sheet
-    {
-        Name = "Expenses",
-        SheetId = 2,
-        Id = workbookPart.GetIdOfPart(expensesPart)
-    });
+    expensesPart.Worksheet =
+        new(
+            new SheetData(
+                new Row(
+                    InlineString("A1", "Category"),
+                    InlineString("B1", "Amount"))
+                {
+                    RowIndex = 1
+                },
+                new Row(
+                    InlineString("A2", "Rent"),
+                    Number("B2", "500"))
+                {
+                    RowIndex = 2
+                }));
+    sheets.AppendChild(
+        new Sheet
+        {
+            Name = "Expenses",
+            SheetId = 2,
+            Id = workbookPart.GetIdOfPart(expensesPart)
+        });
 
-    workbookPart.Workbook = new S.Workbook(sheets);
+    workbookPart.Workbook = new(sheets);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L116-L166' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-standard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L10-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-standard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -510,43 +552,63 @@ await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: tru
     writer.WritePart(
         new("/xl/worksheets/sheet1.xml", UriKind.Relative),
         "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
-        new S.Worksheet(
-            new S.SheetData(
-                new S.Row(
+        new Worksheet(
+            new SheetData(
+                new Row(
                     InlineString("A1", "Quarter"),
                     InlineString("B1", "Revenue"))
-                { RowIndex = 1 },
-                new S.Row(
+                {
+                    RowIndex = 1
+                },
+                new Row(
                     InlineString("A2", "Q1"),
                     Number("B2", "1000"))
-                { RowIndex = 2 },
-                new S.Row(
+                {
+                    RowIndex = 2
+                },
+                new Row(
                     InlineString("A3", "Q2"),
                     Number("B3", "1200"))
-                { RowIndex = 3 })));
+                {
+                    RowIndex = 3
+                })));
 
     writer.WritePart(
         new("/xl/worksheets/sheet2.xml", UriKind.Relative),
         "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
-        new S.Worksheet(
-            new S.SheetData(
-                new S.Row(
+        new Worksheet(
+            new SheetData(
+                new Row(
                     InlineString("A1", "Category"),
                     InlineString("B1", "Amount"))
-                { RowIndex = 1 },
-                new S.Row(
+                {
+                    RowIndex = 1
+                },
+                new Row(
                     InlineString("A2", "Rent"),
                     Number("B2", "500"))
-                { RowIndex = 2 })));
+                {
+                    RowIndex = 2
+                })));
 
     // Then the workbook, with a relationship per worksheet.
     writer.WritePart(
         new("/xl/workbook.xml", UriKind.Relative),
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
-        new S.Workbook(
-            new S.Sheets(
-                new S.Sheet { Name = "Revenue", SheetId = 1, Id = "rId1" },
-                new S.Sheet { Name = "Expenses", SheetId = 2, Id = "rId2" })),
+        new Workbook(
+            new Sheets(
+                new Sheet
+                {
+                    Name = "Revenue",
+                    SheetId = 1,
+                    Id = "rId1"
+                },
+                new Sheet
+                {
+                    Name = "Expenses",
+                    SheetId = 2,
+                    Id = "rId2"
+                })),
         [
             new(
                 new("worksheets/sheet1.xml", UriKind.Relative),
@@ -559,7 +621,7 @@ await using (var writer = StreamingDocument.CreateSpreadsheet(ms, leaveOpen: tru
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L177-L232' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Spreadsheet.cs#L85-L160' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-spreadsheet-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 
@@ -578,7 +640,7 @@ Before:
 using (var doc = PresentationDocument.Create(ms, PresentationDocumentType.Presentation))
 {
     var presentationPart = doc.AddPresentationPart();
-    presentationPart.Presentation = new P.Presentation();
+    presentationPart.Presentation = new();
 
     // Slide master + theme + layout are required scaffolding for
     // any presentation with real slides. AddNewPart wires the
@@ -599,22 +661,33 @@ using (var doc = PresentationDocument.Create(ms, PresentationDocumentType.Presen
 
     // Stitch the presentation's lists together using relationship ids
     // the SDK generated when AddNewPart was called.
-    presentationPart.Presentation = new P.Presentation(
-        new P.SlideMasterIdList(new P.SlideMasterId
-        {
-            Id = 2147483648U,
-            RelationshipId = presentationPart.GetIdOfPart(slideMasterPart)
-        }),
-        new P.SlideIdList(new P.SlideId
-        {
-            Id = 256U,
-            RelationshipId = presentationPart.GetIdOfPart(slidePart)
-        }),
-        new P.SlideSize { Cx = 9144000, Cy = 6858000 },
-        new P.NotesSize { Cx = 6858000, Cy = 9144000 });
+    presentationPart.Presentation =
+        new(
+            new SlideMasterIdList(
+                new SlideMasterId
+                {
+                    Id = 2147483648U,
+                    RelationshipId = presentationPart.GetIdOfPart(slideMasterPart)
+                }),
+            new SlideIdList(
+                new SlideId
+                {
+                    Id = 256U,
+                    RelationshipId = presentationPart.GetIdOfPart(slidePart)
+                }),
+            new SlideSize
+            {
+                Cx = 9144000,
+                Cy = 6858000
+            },
+            new NotesSize
+            {
+                Cx = 6858000,
+                Cy = 9144000
+            });
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L261-L300' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-standard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Presentation.cs#L14-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-standard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
@@ -673,19 +746,29 @@ await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: tr
     writer.WritePart(
         new("/ppt/presentation.xml", UriKind.Relative),
         "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
-        new P.Presentation(
-            new P.SlideMasterIdList(new P.SlideMasterId
+        new Presentation(
+            new SlideMasterIdList(
+                new SlideMasterId
+                {
+                    Id = 2147483648U,
+                    RelationshipId = "rId1"
+                }),
+            new SlideIdList(
+                new SlideId
+                {
+                    Id = 256U,
+                    RelationshipId = "rId2"
+                }),
+            new SlideSize
             {
-                Id = 2147483648U,
-                RelationshipId = "rId1"
-            }),
-            new P.SlideIdList(new P.SlideId
+                Cx = 9144000,
+                Cy = 6858000
+            },
+            new NotesSize
             {
-                Id = 256U,
-                RelationshipId = "rId2"
+                Cx = 6858000,
+                Cy = 9144000
             }),
-            new P.SlideSize { Cx = 9144000, Cy = 6858000 },
-            new P.NotesSize { Cx = 6858000, Cy = 9144000 }),
         [
             new(
                 new("slideMasters/slideMaster1.xml", UriKind.Relative),
@@ -698,7 +781,7 @@ await using (var writer = StreamingDocument.CreatePresentation(ms, leaveOpen: tr
         ]);
 }
 ```
-<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.cs#L311-L382' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/OpenXmlStreaming.Tests/MigrationGuide.Presentation.cs#L75-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-migration-presentation-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 </details>
