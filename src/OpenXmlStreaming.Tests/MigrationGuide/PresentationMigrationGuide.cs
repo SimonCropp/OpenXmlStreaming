@@ -11,7 +11,7 @@ public class PresentationMigrationGuide
     {
         using var stream = new MemoryStream();
 
-// begin-snippet: migration-presentation-standard
+#region migration-presentation-standard
         using (var doc = PresentationDocument.Create(stream, PresentationDocumentType.Presentation))
         {
             var presentationPart = doc.AddPresentationPart();
@@ -61,7 +61,7 @@ public class PresentationMigrationGuide
                         Cy = 9144000
                     });
         }
-// end-snippet
+#endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "pptx");
@@ -72,7 +72,7 @@ public class PresentationMigrationGuide
     {
         using var stream = new MemoryStream();
 
-// begin-snippet: migration-presentation-streaming
+#region migration-presentation-streaming
         await using (var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true))
         {
             // Theme — referenced from the slide master.
@@ -153,7 +153,7 @@ public class PresentationMigrationGuide
                         id: "rId2"),
                 ]);
         }
-// end-snippet
+#endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "pptx");
@@ -164,7 +164,7 @@ public class PresentationMigrationGuide
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: migration-presentation-builder
+        #region migration-presentation-builder
         await using (var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true))
         {
             // No theme, slide master, or slide layout boilerplate — the
@@ -172,7 +172,7 @@ public class PresentationMigrationGuide
             // AddSlide call.
             presentation.AddSlide(BuildTitleSlide("Kickoff"));
         }
-        // end-snippet
+        #endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "pptx");

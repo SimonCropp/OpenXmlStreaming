@@ -8,14 +8,14 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: create-presentation
+        #region create-presentation
         using var writer = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
 
         writer.WritePart(
             new("/ppt/presentation.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
             new Presentation(new SlideIdList()));
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -23,7 +23,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: presentation-builder
+        #region presentation-builder
         await using var presentation = new StreamingPresentationBuilder(stream, leaveOpen: true);
 
         // No theme/master/layout boilerplate — the builder writes a default
@@ -60,7 +60,7 @@ public partial class Samples
 
         // DisposeAsync writes ppt/presentation.xml referencing the slide
         // master and every slide that was added.
-        // end-snippet
+        #endregion
 
         await Task.CompletedTask;
     }

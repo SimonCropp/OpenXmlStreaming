@@ -7,7 +7,7 @@ public class SpreadsheetMigrationGuide
     {
         using var stream = new MemoryStream();
 
-// begin-snippet: migration-spreadsheet-standard
+#region migration-spreadsheet-standard
         using (var doc = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
             var workbookPart = doc.AddWorkbookPart();
@@ -71,7 +71,7 @@ public class SpreadsheetMigrationGuide
 
             workbookPart.Workbook = new(sheets);
         }
-// end-snippet
+#endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "xlsx");
@@ -82,7 +82,7 @@ public class SpreadsheetMigrationGuide
     {
         using var stream = new MemoryStream();
 
-// begin-snippet: migration-spreadsheet-streaming
+#region migration-spreadsheet-streaming
         await using (var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true))
         {
             // Worksheets are written first — the workbook references them by id.
@@ -157,7 +157,7 @@ public class SpreadsheetMigrationGuide
                         id: "rId2"),
                 ]);
         }
-// end-snippet
+#endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "xlsx");
@@ -168,7 +168,7 @@ public class SpreadsheetMigrationGuide
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: migration-spreadsheet-builder
+        #region migration-spreadsheet-builder
         await using (var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true))
         {
             workbook.AddWorksheet(
@@ -214,7 +214,7 @@ public class SpreadsheetMigrationGuide
         // DisposeAsync (triggered by the `await using` block) writes
         // xl/workbook.xml referencing every worksheet. No sheet URIs or
         // rIds to track.
-        // end-snippet
+        #endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "xlsx");

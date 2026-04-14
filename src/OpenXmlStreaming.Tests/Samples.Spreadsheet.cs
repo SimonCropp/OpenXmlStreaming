@@ -8,7 +8,7 @@ public partial class Samples
         using var stream = new MemoryStream();
         using var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
 
-        // begin-snippet: part-relationships
+        #region part-relationships
         writer.WritePart(
             new("/xl/workbook.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
@@ -26,7 +26,7 @@ public partial class Samples
                     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
                     id: "rId1")
             ]);
-        // end-snippet
+        #endregion
 
         writer.WritePart(
             new("/xl/worksheets/sheet1.xml", UriKind.Relative),
@@ -41,7 +41,7 @@ public partial class Samples
 
         await using var writer = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
 
-        // begin-snippet: flush-async
+        #region flush-async
         // Write the worksheet, then push its bytes to the target stream
         // asynchronously before moving on to the next part. Useful at part
         // boundaries against remote sinks — the thread isn't blocked on
@@ -69,7 +69,7 @@ public partial class Samples
                     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
                     id: "rId1"),
             ]);
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -77,7 +77,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: workbook-builder
+        #region workbook-builder
         await using var workbook = new StreamingWorkbookBuilder(stream, leaveOpen: true);
 
         workbook.AddWorksheet(
@@ -125,6 +125,6 @@ public partial class Samples
 
         // DisposeAsync (triggered by `await using`) writes xl/workbook.xml
         // referencing both sheets — no manual rId wiring.
-        // end-snippet
+        #endregion
     }
 }

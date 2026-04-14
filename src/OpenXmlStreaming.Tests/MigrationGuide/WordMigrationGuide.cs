@@ -7,7 +7,7 @@ public class WordMigrationGuide
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: migration-word-standard
+        #region migration-word-standard
         using (var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document))
         {
             var mainPart = doc.AddMainDocumentPart();
@@ -56,7 +56,7 @@ public class WordMigrationGuide
                         new Paragraph(
                             new Run(new Text("Operating costs held flat.")))));
         }
-        // end-snippet
+        #endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "docx");
@@ -67,7 +67,7 @@ public class WordMigrationGuide
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: migration-word-streaming
+        #region migration-word-streaming
         await using (var writer = StreamingDocument.CreateWord(stream, leaveOpen: true))
         {
             // Write the styles part first. Every part is written as a
@@ -125,7 +125,7 @@ public class WordMigrationGuide
                         id: "rId1"),
                 ]);
         }
-        // end-snippet
+        #endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "docx");
@@ -136,7 +136,7 @@ public class WordMigrationGuide
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: migration-word-builder
+        #region migration-word-builder
         await using (var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true))
         {
             // Add the styles part. The builder writes it immediately and
@@ -184,7 +184,7 @@ public class WordMigrationGuide
                         new Paragraph(
                             new Run(new Text("Operating costs held flat."))))));
         }
-        // end-snippet
+        #endregion
 
         stream.Position = 0;
         await Verify(stream, extension: "docx");

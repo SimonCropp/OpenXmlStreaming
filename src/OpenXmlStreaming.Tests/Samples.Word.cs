@@ -8,7 +8,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: minimal-word
+        #region minimal-word
         using var writer = new OpenXmlPackageWriter(stream, leaveOpen: true);
 
         writer.AddRelationship(
@@ -20,7 +20,7 @@ public partial class Samples
             new("/word/document.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
             new Document(new Body(new Paragraph(new Run(new Text("Hello!"))))));
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -28,14 +28,14 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: streaming-document-factory
+        #region streaming-document-factory
         using var writer = StreamingDocument.CreateWord(stream, leaveOpen: true);
 
         writer.WritePart(
             new("/word/document.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
             new Document(new Body(new Paragraph(new Run(new Text("Forward-only!"))))));
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -49,7 +49,7 @@ public partial class Samples
             "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
             "rId1");
 
-        // begin-snippet: streaming-part-content
+        #region streaming-part-content
         using var entry = writer.CreatePart(
             new("/word/document.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml");
@@ -61,7 +61,7 @@ public partial class Samples
         xmlWriter.WriteElement(new Paragraph(new Run(new Text("Streamed!"))));
         xmlWriter.WriteEndElement();
         xmlWriter.WriteEndElement();
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -79,13 +79,13 @@ public partial class Samples
             new("/word/document.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml");
 
-        // begin-snippet: external-relationship
+        #region external-relationship
         entry.AddRelationship(
             new("https://example.com", UriKind.Absolute),
             "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
             TargetMode.External,
             "rId1");
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -93,7 +93,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: construction-variants
+        #region construction-variants
         // Direct construction
         using var direct = new OpenXmlPackageWriter(stream, leaveOpen: true);
 
@@ -101,13 +101,13 @@ public partial class Samples
         using var word = StreamingDocument.CreateWord(stream, leaveOpen: true);
         using var spreadsheet = StreamingDocument.CreateSpreadsheet(stream, leaveOpen: true);
         using var presentation = StreamingDocument.CreatePresentation(stream, leaveOpen: true);
-        // end-snippet
+        #endregion
     }
 
     [Test]
     public void PartRelationshipStruct()
     {
-        // begin-snippet: part-relationship-struct
+        #region part-relationship-struct
         var relationship = new PartRelationship(
             targetUri: new("styles.xml", UriKind.Relative),
             relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
@@ -116,7 +116,7 @@ public partial class Samples
             id: "rId1",
             // default
             targetMode: TargetMode.Internal);
-        // end-snippet
+        #endregion
 
         _ = relationship;
     }
@@ -126,7 +126,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: async-usage
+        #region async-usage
         await using var writer = StreamingDocument.CreateWord(stream, leaveOpen: true);
 
         writer.WritePart(
@@ -137,7 +137,7 @@ public partial class Samples
         // DisposeAsync (triggered by `await using`) asynchronously flushes
         // the final buffer — including the ZIP central directory — so remote
         // sinks like SQL BLOB streams don't block the thread on network I/O.
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -145,7 +145,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: custom-buffer-size
+        #region custom-buffer-size
         // Bigger buffer = fewer, larger writes hit the sink — good for
         // remote streams where per-write overhead is high. Pass 0 to
         // disable buffering entirely and write straight to the sink.
@@ -154,7 +154,7 @@ public partial class Samples
             leaveOpen: true,
             // 1 MB
             bufferSize: 1024 * 1024);
-        // end-snippet
+        #endregion
     }
 
     [Test]
@@ -162,7 +162,7 @@ public partial class Samples
     {
         using var stream = new MemoryStream();
 
-        // begin-snippet: word-document-builder
+        #region word-document-builder
         await using var word = new StreamingWordDocumentBuilder(stream, leaveOpen: true);
 
         // Add an optional styles part — referenced by paragraphs via StyleId.
@@ -217,6 +217,6 @@ public partial class Samples
                             Type = HeaderFooterValues.Default,
                             Id = footerId
                         }))));
-        // end-snippet
+        #endregion
     }
 }
