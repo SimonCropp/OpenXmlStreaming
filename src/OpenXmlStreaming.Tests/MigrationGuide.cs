@@ -21,30 +21,45 @@ public class MigrationGuide
             // Add a styles part through the DOM. The SDK wires the relationship
             // from the main part to the styles part automatically.
             var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-            stylesPart.Styles = new Styles(
+            stylesPart.Styles = new(
                 new Style(
-                    new StyleName { Val = "Heading 1" },
-                    new BasedOn { Val = "Normal" },
-                    new NextParagraphStyle { Val = "Normal" },
-                    new W.StyleRunProperties(
-                        new W.Bold(),
-                        new W.FontSize { Val = "32" }))
+                    new StyleName
+                    {
+                        Val = "Heading 1"
+                    },
+                    new BasedOn
+                    {
+                        Val = "Normal"
+                    },
+                    new NextParagraphStyle
+                    {
+                        Val = "Normal"
+                    },
+                    new StyleRunProperties(
+                        new Bold(),
+                        new FontSize
+                        {
+                            Val = "32"
+                        }))
                 {
                     Type = StyleValues.Paragraph,
                     StyleId = "Heading1"
                 });
 
             // Assign the main document body. Paragraphs reference the style by id.
-            mainPart.Document = new Document(
+            mainPart.Document = new(
                 new Body(
                     new Paragraph(
                         new ParagraphProperties(
-                            new ParagraphStyleId { Val = "Heading1" }),
-                        new W.Run(new W.Text("Quarterly Report"))),
+                            new ParagraphStyleId
+                            {
+                                Val = "Heading1"
+                            }),
+                        new Run(new Text("Quarterly Report"))),
                     new Paragraph(
-                        new W.Run(new W.Text("Revenue grew 15% year-over-year."))),
+                        new Run(new Text("Revenue grew 15% year-over-year."))),
                     new Paragraph(
-                        new W.Run(new W.Text("Operating costs held flat.")))));
+                        new Run(new Text("Operating costs held flat.")))));
         }
         // end-snippet
 
@@ -67,12 +82,24 @@ public class MigrationGuide
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml",
                 new Styles(
                     new Style(
-                        new StyleName { Val = "Heading 1" },
-                        new BasedOn { Val = "Normal" },
-                        new NextParagraphStyle { Val = "Normal" },
-                        new W.StyleRunProperties(
-                            new W.Bold(),
-                            new W.FontSize { Val = "32" }))
+                        new StyleName
+                        {
+                            Val = "Heading 1"
+                        },
+                        new BasedOn
+                        {
+                            Val = "Normal"
+                        },
+                        new NextParagraphStyle
+                        {
+                            Val = "Normal"
+                        },
+                        new StyleRunProperties(
+                            new Bold(),
+                            new FontSize
+                            {
+                                Val = "32"
+                            }))
                     {
                         Type = StyleValues.Paragraph,
                         StyleId = "Heading1"
@@ -87,12 +114,15 @@ public class MigrationGuide
                     new Body(
                         new Paragraph(
                             new ParagraphProperties(
-                                new ParagraphStyleId { Val = "Heading1" }),
-                            new W.Run(new W.Text("Quarterly Report"))),
+                                new ParagraphStyleId
+                                {
+                                    Val = "Heading1"
+                                }),
+                            new Run(new Text("Quarterly Report"))),
                         new Paragraph(
-                            new W.Run(new W.Text("Revenue grew 15% year-over-year."))),
+                            new Run(new Text("Revenue grew 15% year-over-year."))),
                         new Paragraph(
-                            new W.Run(new W.Text("Operating costs held flat."))))),
+                            new Run(new Text("Operating costs held flat."))))),
                 [
                     new(
                         new("styles.xml", UriKind.Relative),
@@ -121,7 +151,7 @@ public class MigrationGuide
 
             // Revenue sheet
             var revenuePart = workbookPart.AddNewPart<WorksheetPart>();
-            revenuePart.Worksheet = new S.Worksheet(
+            revenuePart.Worksheet = new(
                 new S.SheetData(
                     new S.Row(
                         InlineString("A1", "Quarter"),
@@ -144,16 +174,20 @@ public class MigrationGuide
 
             // Expenses sheet
             var expensesPart = workbookPart.AddNewPart<WorksheetPart>();
-            expensesPart.Worksheet = new S.Worksheet(
+            expensesPart.Worksheet = new(
                 new S.SheetData(
                     new S.Row(
                         InlineString("A1", "Category"),
                         InlineString("B1", "Amount"))
-                    { RowIndex = 1 },
+                    {
+                        RowIndex = 1
+                    },
                     new S.Row(
                         InlineString("A2", "Rent"),
                         Number("B2", "500"))
-                    { RowIndex = 2 }));
+                    {
+                        RowIndex = 2
+                    }));
             sheets.AppendChild(new S.Sheet
             {
                 Name = "Expenses",
