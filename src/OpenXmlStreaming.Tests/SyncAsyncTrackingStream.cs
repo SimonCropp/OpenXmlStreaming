@@ -22,7 +22,7 @@ class SyncAsyncTrackingStream(Stream inner) : Stream
     }
 
     public override void Flush() => inner.Flush();
-    public override Task FlushAsync(CancellationToken cancellationToken) => inner.FlushAsync(cancellationToken);
+    public override Task FlushAsync(Cancel cancel) => inner.FlushAsync(cancel);
 
     public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -35,17 +35,17 @@ class SyncAsyncTrackingStream(Stream inner) : Stream
         inner.Write(buffer, offset, count);
     }
 
-    public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    public override Task WriteAsync(byte[] buffer, int offset, int count, Cancel cancel)
     {
         AsyncWriteCalls++;
         TotalBytesWritten += count;
-        return inner.WriteAsync(buffer, offset, count, cancellationToken);
+        return inner.WriteAsync(buffer, offset, count, cancel);
     }
 
-    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, Cancel cancel = default)
     {
         AsyncWriteCalls++;
         TotalBytesWritten += buffer.Length;
-        return inner.WriteAsync(buffer, cancellationToken);
+        return inner.WriteAsync(buffer, cancel);
     }
 }

@@ -199,6 +199,30 @@ public sealed class OpenXmlPackageWriter :
         }
     }
 
+    /// <summary>
+    /// Asynchronously flushes any bytes currently sitting in the internal write
+    /// buffer to the target stream via
+    /// <see cref="Stream.WriteAsync(ReadOnlyMemory{byte}, CancellationToken)"/>.
+    /// Useful between <see cref="WritePart"/> calls to push accumulated bytes to
+    /// a remote sink at part boundaries. A no-op when the writer is unbuffered
+    /// (<c>bufferSize: 0</c>) or the buffer is empty.
+    /// </summary>
+    /// <remarks>
+    /// This does not eliminate intermediate sync writes that occur when a single
+    /// <see cref="WritePart"/> call produces more bytes than the buffer can hold
+    /// — those spill synchronously during serialization regardless. Use a larger
+    /// buffer if you need to avoid that.
+    /// </remarks>
+    public Task FlushAsync(Cancel cancel = default)
+    {
+        if (bufferedStream is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return bufferedStream.FlushAsync(cancel);
+    }
+
     void WritePackageRelationships()
     {
         if (packageRelationships.Count == 0)
@@ -267,12 +291,12 @@ public sealed class OpenXmlPackageWriter :
         writer.WriteAttributeString("ContentType", "application/xml");
         writer.WriteEndElement();
 
-        foreach (var ct in contentTypes)
+        foreach (var (partUri, contentType) in contentTypes)
         {
             writer.WriteStartElement("Override");
-            var partName = ct.PartUri.OriginalString;
+            var partName = partUri.OriginalString;
             writer.WriteAttributeString("PartName", partName.Length > 0 && partName[0] == '/' ? partName : "/" + partName);
-            writer.WriteAttributeString("ContentType", ct.ContentType);
+            writer.WriteAttributeString("ContentType", contentType);
             writer.WriteEndElement();
         }
 

@@ -12,20 +12,12 @@ namespace OpenXmlStreaming;
 /// and usually largest single — flush happens without blocking the thread on
 /// network I/O.
 /// </summary>
-sealed class BufferedWriteStream : Stream
+sealed class BufferedWriteStream(Stream target, int bufferSize, bool leaveOpen) :
+    Stream
 {
-    readonly Stream target;
-    readonly byte[] buffer;
-    readonly bool leaveOpen;
+    readonly byte[] buffer = new byte[bufferSize];
     int count;
     bool disposed;
-
-    public BufferedWriteStream(Stream target, int bufferSize, bool leaveOpen)
-    {
-        this.target = target;
-        buffer = new byte[bufferSize];
-        this.leaveOpen = leaveOpen;
-    }
 
     public override bool CanRead => false;
     public override bool CanSeek => false;
@@ -68,14 +60,14 @@ sealed class BufferedWriteStream : Stream
     public override void Flush() =>
         FlushBufferSync();
 
-    public override Task FlushAsync(CancellationToken cancellationToken)
+    public override Task FlushAsync(Cancel cancel)
     {
         if (count == 0)
         {
             return Task.CompletedTask;
         }
 
-        return FlushBufferAsyncCore(cancellationToken);
+        return FlushBufferAsyncCore(cancel);
     }
 
     void FlushBufferSync()
@@ -89,11 +81,11 @@ sealed class BufferedWriteStream : Stream
         count = 0;
     }
 
-    async Task FlushBufferAsyncCore(CancellationToken cancellationToken)
+    async Task FlushBufferAsyncCore(Cancel cancel)
     {
         var toWrite = count;
         count = 0;
-        await target.WriteAsync(buffer.AsMemory(0, toWrite), cancellationToken);
+        await target.WriteAsync(buffer.AsMemory(0, toWrite), cancel);
     }
 
     protected override void Dispose(bool disposing)

@@ -538,12 +538,36 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
-    public async Task BufferSize_Zero_DisablesBuffering()
+    public async Task BufferSize_Zero_WritesReachTargetDuringWritePart()
     {
         using var ms = new MemoryStream();
         var tracker = new SyncAsyncTrackingStream(ms);
 
-        await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 0))
+        await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 0);
+
+        writer.AddRelationship(
+            new("/word/document.xml", UriKind.Relative),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+            "rId1");
+
+        writer.WritePart(
+            new("/word/document.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+            new Document(new Body(new Paragraph(new Run(new Text("Unbuffered!"))))));
+
+        // With no buffer, ZipArchive's writes land on the target immediately
+        // during WritePart — they're not deferred to DisposeAsync. This is
+        // the distinguishing property of bufferSize: 0.
+        Assert.That(tracker.TotalBytesWritten, Is.GreaterThan(0),
+            "Writes should reach the target during WritePart, not deferred");
+    }
+
+    [Test]
+    public async Task BufferSize_Zero_RoundTrips()
+    {
+        using var ms = new MemoryStream();
+
+        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true, bufferSize: 0))
         {
             writer.AddRelationship(
                 new("/word/document.xml", UriKind.Relative),
@@ -555,14 +579,6 @@ public class OpenXmlPackageWriterTests
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
                 new Document(new Body(new Paragraph(new Run(new Text("Unbuffered!"))))));
         }
-
-        // With no buffer, every ZipArchive sync write lands directly on the
-        // target, and DisposeAsync has nothing to flush — so no async writes.
-        Assert.Multiple(() =>
-        {
-            Assert.That(tracker.SyncWriteCalls, Is.GreaterThan(0));
-            Assert.That(tracker.AsyncWriteCalls, Is.Zero);
-        });
 
         ms.Position = 0;
         using var doc = WordprocessingDocument.Open(ms, false);
@@ -602,6 +618,113 @@ public class OpenXmlPackageWriterTests
         ms.Position = 0;
         using var doc = WordprocessingDocument.Open(ms, false);
         Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Spilled!"));
+    }
+
+    [Test]
+    public async Task FlushAsync_PushesBufferedBytesViaWriteAsync()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true);
+        writer.AddRelationship(
+            new("/word/document.xml", UriKind.Relative),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+            "rId1");
+
+        writer.WritePart(
+            new("/word/document.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+            new Document(new Body(new Paragraph(new Run(new Text("First!"))))));
+
+        var asyncBefore = tracker.AsyncWriteCalls;
+        await writer.FlushAsync();
+        var asyncAfter = tracker.AsyncWriteCalls;
+
+        Assert.That(asyncAfter, Is.GreaterThan(asyncBefore),
+            "FlushAsync should push at least one async write to the target");
+    }
+
+    [Test]
+    public async Task FlushAsync_EmptyBuffer_IsNoop()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true);
+        // Nothing has been written yet — buffer is empty.
+
+        var beforeSync = tracker.SyncWriteCalls;
+        var beforeAsync = tracker.AsyncWriteCalls;
+
+        await writer.FlushAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tracker.SyncWriteCalls, Is.EqualTo(beforeSync));
+            Assert.That(tracker.AsyncWriteCalls, Is.EqualTo(beforeAsync));
+        });
+    }
+
+    [Test]
+    public async Task FlushAsync_Unbuffered_IsNoop()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        await using var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 0);
+        writer.AddRelationship(
+            new("/word/document.xml", UriKind.Relative),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+            "rId1");
+
+        writer.WritePart(
+            new("/word/document.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+            new Document(new Body()));
+
+        var beforeAsync = tracker.AsyncWriteCalls;
+        await writer.FlushAsync();
+
+        Assert.That(tracker.AsyncWriteCalls, Is.EqualTo(beforeAsync),
+            "FlushAsync with bufferSize: 0 must be a no-op — nothing to flush");
+    }
+
+    [Test]
+    public async Task FlushAsync_BetweenParts_PackageStillRoundTrips()
+    {
+        using var ms = new MemoryStream();
+
+        await using (var writer = new OpenXmlPackageWriter(ms, leaveOpen: true))
+        {
+            writer.AddRelationship(
+                new("/word/document.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+                "rId1");
+
+            writer.WritePart(
+                new("/word/document.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+                new Document(new Body(new Paragraph(new Run(new Text("Flushed between!"))))),
+                [
+                    new(
+                        new("styles.xml", UriKind.Relative),
+                        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+                        id: "rId1"),
+                ]);
+
+            await writer.FlushAsync();
+
+            writer.WritePart(
+                new("/word/styles.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml",
+                new Styles());
+        }
+
+        ms.Position = 0;
+        using var doc = WordprocessingDocument.Open(ms, false);
+        Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Flushed between!"));
+        Assert.That(doc.MainDocumentPart.GetPartsOfType<StyleDefinitionsPart>(), Is.Not.Empty);
     }
 
     [Test]

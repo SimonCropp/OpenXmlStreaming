@@ -11,10 +11,11 @@ public class ForwardOnlyBenchmarks
     {
         using var stream = new NonwritingStream();
         using var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document);
-        doc.AddMainDocumentPart().Document = new Document(
-            new Body(
-                new Paragraph(
-                    new W.Run(new W.Text("Hello, world!")))));
+        doc.AddMainDocumentPart().Document =
+            new(
+                new Body(
+                    new Paragraph(
+                        new W.Run(new W.Text("Hello, world!")))));
     }
 
     [Benchmark]
@@ -41,14 +42,15 @@ public class ForwardOnlyBenchmarks
 
         for (var i = 0; i < 20; i++)
         {
-            body.AppendChild(new Paragraph(
-                new ParagraphProperties(new W.Bold()),
-                new W.Run(
-                    new W.RunProperties(new W.Italic()),
-                    new W.Text("Paragraph " + i))));
+            body.AppendChild(
+                new Paragraph(
+                    new ParagraphProperties(new W.Bold()),
+                    new W.Run(
+                        new W.RunProperties(new W.Italic()),
+                        new W.Text("Paragraph " + i))));
         }
 
-        doc.AddMainDocumentPart().Document = new Document(body);
+        doc.AddMainDocumentPart().Document = new(body);
     }
 
     [Benchmark]
@@ -61,11 +63,12 @@ public class ForwardOnlyBenchmarks
 
         for (var i = 0; i < 20; i++)
         {
-            body.AppendChild(new Paragraph(
-                new ParagraphProperties(new W.Bold()),
-                new W.Run(
-                    new W.RunProperties(new W.Italic()),
-                    new W.Text("Paragraph " + i))));
+            body.AppendChild(
+                new Paragraph(
+                    new ParagraphProperties(new W.Bold()),
+                    new W.Run(
+                        new W.RunProperties(new W.Italic()),
+                        new W.Text("Paragraph " + i))));
         }
 
         writer.WritePart(
@@ -86,28 +89,44 @@ public class ForwardOnlyBenchmarks
 
         for (var i = 0; i < 100; i++)
         {
-            body.AppendChild(new Paragraph(
-                new ParagraphProperties(
-                    new ParagraphStyleId { Val = "Heading1" }),
-                new W.Run(
-                    new W.RunProperties(
-                        new W.Bold(),
-                        new W.FontSize { Val = "28" }),
-                    new W.Text("Section " + i)),
-                new W.Run(
-                    new W.Break()),
-                new W.Run(
-                    new W.Text("Content for section " + i + " with some additional text to make it realistic."))));
+            body.AppendChild(
+                new Paragraph(
+                    new ParagraphProperties(
+                        new ParagraphStyleId
+                        {
+                            Val = "Heading1"
+                        }),
+                    new W.Run(
+                        new W.RunProperties(
+                            new W.Bold(),
+                            new W.FontSize
+                            {
+                                Val = "28"
+                            }),
+                        new W.Text("Section " + i)),
+                    new W.Run(
+                        new W.Break()),
+                    new W.Run(
+                        new W.Text("Content for section " + i + " with some additional text to make it realistic."))));
         }
 
-        mainPart.Document = new Document(body);
+        mainPart.Document = new(body);
 
         var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-        stylesPart.Styles = new Styles(
+        stylesPart.Styles = new(
             new Style(
-                new StyleName { Val = "heading 1" },
-                new BasedOn { Val = "Normal" })
-            { Type = StyleValues.Paragraph, StyleId = "Heading1" });
+                new StyleName
+                {
+                    Val = "heading 1"
+                },
+                new BasedOn
+                {
+                    Val = "Normal"
+                })
+            {
+                Type = StyleValues.Paragraph,
+                StyleId = "Heading1"
+            });
     }
 
     [Benchmark]
@@ -120,18 +139,25 @@ public class ForwardOnlyBenchmarks
 
         for (var i = 0; i < 100; i++)
         {
-            body.AppendChild(new Paragraph(
-                new ParagraphProperties(
-                    new ParagraphStyleId { Val = "Heading1" }),
-                new W.Run(
-                    new W.RunProperties(
-                        new W.Bold(),
-                        new W.FontSize { Val = "28" }),
-                    new W.Text("Section " + i)),
-                new W.Run(
-                    new W.Break()),
-                new W.Run(
-                    new W.Text("Content for section " + i + " with some additional text to make it realistic."))));
+            body.AppendChild(
+                new Paragraph(
+                    new ParagraphProperties(
+                        new ParagraphStyleId
+                        {
+                            Val = "Heading1"
+                        }),
+                    new W.Run(
+                        new W.RunProperties(
+                            new W.Bold(),
+                            new W.FontSize
+                            {
+                                Val = "28"
+                            }),
+                        new W.Text("Section " + i)),
+                    new W.Run(
+                        new W.Break()),
+                    new W.Run(
+                        new W.Text("Content for section " + i + " with some additional text to make it realistic."))));
         }
 
         var relationships = new[]
@@ -153,9 +179,18 @@ public class ForwardOnlyBenchmarks
             "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml",
             new Styles(
                 new Style(
-                    new StyleName { Val = "heading 1" },
-                    new BasedOn { Val = "Normal" })
-                { Type = StyleValues.Paragraph, StyleId = "Heading1" }));
+                    new StyleName
+                    {
+                        Val = "heading 1"
+                    },
+                    new BasedOn
+                    {
+                        Val = "Normal"
+                    })
+                {
+                    Type = StyleValues.Paragraph,
+                    StyleId = "Heading1"
+                }));
     }
 
     [Benchmark]
@@ -166,14 +201,24 @@ public class ForwardOnlyBenchmarks
 
         var workbookPart = doc.AddWorkbookPart();
         var sheetPart = workbookPart.AddNewPart<WorksheetPart>();
-        sheetPart.Worksheet = new Worksheet(
-            new SheetData(
-                new Row(
-                    new Cell { CellValue = new CellValue("Hello"), DataType = CellValues.String })));
+        sheetPart.Worksheet =
+            new(
+                new SheetData(
+                    new Row(
+                        new Cell
+                        {
+                            CellValue = new("Hello"),
+                            DataType = CellValues.String
+                        })));
 
-        workbookPart.Workbook = new Workbook(
+        workbookPart.Workbook = new(
             new Sheets(
-                new Sheet { Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart) }));
+                new Sheet
+                {
+                    Name = "Sheet1",
+                    SheetId = 1,
+                    Id = workbookPart.GetIdOfPart(sheetPart)
+                }));
     }
 
     [Benchmark]
@@ -188,14 +233,23 @@ public class ForwardOnlyBenchmarks
             new Worksheet(
                 new SheetData(
                     new Row(
-                        new Cell { CellValue = new CellValue("Hello"), DataType = CellValues.String }))));
+                        new Cell
+                        {
+                            CellValue = new("Hello"),
+                            DataType = CellValues.String
+                        }))));
 
         writer.WritePart(
             new("/xl/workbook.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
             new Workbook(
                 new Sheets(
-                    new Sheet { Name = "Sheet1", SheetId = 1, Id = "rId1" })),
+                    new Sheet
+                    {
+                        Name = "Sheet1",
+                        SheetId = 1,
+                        Id = "rId1"
+                    })),
             [
                 new(
                     new("worksheets/sheet1.xml", UriKind.Relative),
@@ -217,25 +271,34 @@ public class ForwardOnlyBenchmarks
 
         for (uint r = 1; r <= 100; r++)
         {
-            var row = new Row { RowIndex = r };
+            var row = new Row
+            {
+                RowIndex = r
+            };
 
             for (var c = 0; c < 10; c++)
             {
-                row.AppendChild(new Cell
-                {
-                    CellValue = new CellValue(((r * 10) + c).ToString()),
-                    DataType = CellValues.Number,
-                });
+                row.AppendChild(
+                    new Cell
+                    {
+                        CellValue = new((r * 10 + c).ToString()),
+                        DataType = CellValues.Number,
+                    });
             }
 
             sheetData.AppendChild(row);
         }
 
-        sheetPart.Worksheet = new Worksheet(sheetData);
+        sheetPart.Worksheet = new(sheetData);
 
-        workbookPart.Workbook = new Workbook(
+        workbookPart.Workbook = new(
             new Sheets(
-                new Sheet { Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart) }));
+                new Sheet
+                {
+                    Name = "Sheet1",
+                    SheetId = 1,
+                    Id = workbookPart.GetIdOfPart(sheetPart)
+                }));
     }
 
     [Benchmark]
@@ -248,15 +311,19 @@ public class ForwardOnlyBenchmarks
 
         for (uint r = 1; r <= 100; r++)
         {
-            var row = new Row { RowIndex = r };
+            var row = new Row
+            {
+                RowIndex = r
+            };
 
             for (var c = 0; c < 10; c++)
             {
-                row.AppendChild(new Cell
-                {
-                    CellValue = new CellValue(((r * 10) + c).ToString()),
-                    DataType = CellValues.Number,
-                });
+                row.AppendChild(
+                    new Cell
+                    {
+                        CellValue = new((r * 10 + c).ToString()),
+                        DataType = CellValues.Number,
+                    });
             }
 
             sheetData.AppendChild(row);
@@ -272,7 +339,12 @@ public class ForwardOnlyBenchmarks
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
             new Workbook(
                 new Sheets(
-                    new Sheet { Name = "Sheet1", SheetId = 1, Id = "rId1" })),
+                    new Sheet
+                    {
+                        Name = "Sheet1",
+                        SheetId = 1,
+                        Id = "rId1"
+                    })),
             [
                 new(
                     new("worksheets/sheet1.xml", UriKind.Relative),
@@ -298,31 +370,36 @@ public class ForwardOnlyBenchmarks
 
             for (uint r = 1; r <= 500; r++)
             {
-                var row = new Row { RowIndex = r };
+                var row = new Row
+                {
+                    RowIndex = r
+                };
 
                 for (var c = 0; c < 10; c++)
                 {
-                    row.AppendChild(new Cell
-                    {
-                        CellValue = new CellValue(((s * 5000) + (r * 10) + c).ToString()),
-                        DataType = CellValues.Number,
-                    });
+                    row.AppendChild(
+                        new Cell
+                        {
+                            CellValue = new((s * 5000 + r * 10 + c).ToString()),
+                            DataType = CellValues.Number,
+                        });
                 }
 
                 sheetData.AppendChild(row);
             }
 
-            sheetPart.Worksheet = new Worksheet(sheetData);
+            sheetPart.Worksheet = new(sheetData);
 
-            sheets.AppendChild(new Sheet
-            {
-                Name = "Sheet" + (s + 1),
-                SheetId = (uint)(s + 1),
-                Id = workbookPart.GetIdOfPart(sheetPart),
-            });
+            sheets.AppendChild(
+                new Sheet
+                {
+                    Name = "Sheet" + (s + 1),
+                    SheetId = (uint)(s + 1),
+                    Id = workbookPart.GetIdOfPart(sheetPart),
+                });
         }
 
-        workbookPart.Workbook = new Workbook(sheets);
+        workbookPart.Workbook = new(sheets);
     }
 
     [Benchmark]
@@ -339,15 +416,19 @@ public class ForwardOnlyBenchmarks
 
             for (uint r = 1; r <= 500; r++)
             {
-                var row = new Row { RowIndex = r };
+                var row = new Row
+                {
+                    RowIndex = r
+                };
 
                 for (var c = 0; c < 10; c++)
                 {
-                    row.AppendChild(new Cell
-                    {
-                        CellValue = new CellValue(((s * 5000) + (r * 10) + c).ToString()),
-                        DataType = CellValues.Number,
-                    });
+                    row.AppendChild(
+                        new Cell
+                        {
+                            CellValue = new((s * 5000 + r * 10 + c).ToString()),
+                            DataType = CellValues.Number,
+                        });
                 }
 
                 sheetData.AppendChild(row);
@@ -361,22 +442,24 @@ public class ForwardOnlyBenchmarks
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
                 new Worksheet(sheetData));
 
-            sheetRels[s] = new PartRelationship(
-                new(sheetUri, UriKind.Relative),
-                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
-                id: relId);
+            sheetRels[s] =
+                new(
+                    new(sheetUri, UriKind.Relative),
+                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+                    id: relId);
         }
 
         var sheets = new Sheets();
 
         for (var s = 0; s < 3; s++)
         {
-            sheets.AppendChild(new Sheet
-            {
-                Name = "Sheet" + (s + 1),
-                SheetId = (uint)(s + 1),
-                Id = "rId" + (s + 1),
-            });
+            sheets.AppendChild(
+                new Sheet
+                {
+                    Name = "Sheet" + (s + 1),
+                    SheetId = (uint)(s + 1),
+                    Id = "rId" + (s + 1),
+                });
         }
 
         writer.WritePart(
@@ -394,14 +477,24 @@ public class ForwardOnlyBenchmarks
 
         var presentationPart = doc.AddPresentationPart();
         var slidePart = presentationPart.AddNewPart<SlidePart>();
-        slidePart.Slide = new P.Slide(
-            new P.CommonSlideData(
-                new P.ShapeTree()));
+        slidePart.Slide =
+            new(
+                new P.CommonSlideData(
+                    new P.ShapeTree()));
 
-        presentationPart.Presentation = new P.Presentation(
-            new P.SlideIdList(
-                new P.SlideId { Id = 256, RelationshipId = presentationPart.GetIdOfPart(slidePart) }),
-            new P.SlideSize { Cx = 9144000, Cy = 6858000 });
+        presentationPart.Presentation =
+            new(
+                new P.SlideIdList(
+                    new P.SlideId
+                    {
+                        Id = 256,
+                        RelationshipId = presentationPart.GetIdOfPart(slidePart)
+                    }),
+                new P.SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                });
     }
 
     [Benchmark]
@@ -422,8 +515,16 @@ public class ForwardOnlyBenchmarks
             "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
             new P.Presentation(
                 new P.SlideIdList(
-                    new P.SlideId { Id = 256, RelationshipId = "rId1" }),
-                new P.SlideSize { Cx = 9144000, Cy = 6858000 }),
+                    new P.SlideId
+                    {
+                        Id = 256,
+                        RelationshipId = "rId1"
+                    }),
+                new P.SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                }),
             [
                 new(
                     new("slides/slide1.xml", UriKind.Relative),
@@ -444,25 +545,32 @@ public class ForwardOnlyBenchmarks
         for (uint i = 0; i < 10; i++)
         {
             var slidePart = presentationPart.AddNewPart<SlidePart>();
-            slidePart.Slide = new P.Slide(
-                new P.CommonSlideData(
-                    new P.ShapeTree(
-                        new P.Shape(
-                            new P.TextBody(
-                                new DocumentFormat.OpenXml.Drawing.Paragraph(
-                                    new DocumentFormat.OpenXml.Drawing.Run(
-                                        new DocumentFormat.OpenXml.Drawing.Text("Slide " + (i + 1)))))))));
+            slidePart.Slide =
+                new(
+                    new P.CommonSlideData(
+                        new P.ShapeTree(
+                            new P.Shape(
+                                new P.TextBody(
+                                    new DocumentFormat.OpenXml.Drawing.Paragraph(
+                                        new DocumentFormat.OpenXml.Drawing.Run(
+                                            new DocumentFormat.OpenXml.Drawing.Text("Slide " + (i + 1)))))))));
 
-            slideIdList.AppendChild(new P.SlideId
-            {
-                Id = 256 + i,
-                RelationshipId = presentationPart.GetIdOfPart(slidePart),
-            });
+            slideIdList.AppendChild(
+                new P.SlideId
+                {
+                    Id = 256 + i,
+                    RelationshipId = presentationPart.GetIdOfPart(slidePart),
+                });
         }
 
-        presentationPart.Presentation = new P.Presentation(
-            slideIdList,
-            new P.SlideSize { Cx = 9144000, Cy = 6858000 });
+        presentationPart.Presentation =
+            new(
+                slideIdList,
+                new P.SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                });
     }
 
     [Benchmark]
@@ -490,12 +598,18 @@ public class ForwardOnlyBenchmarks
                                         new DocumentFormat.OpenXml.Drawing.Run(
                                             new DocumentFormat.OpenXml.Drawing.Text("Slide " + (i + 1))))))))));
 
-            slideRels[i] = new PartRelationship(
-                new("slides/slide" + (i + 1) + ".xml", UriKind.Relative),
-                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
-                id: relId);
+            slideRels[i] =
+                new(
+                    new("slides/slide" + (i + 1) + ".xml", UriKind.Relative),
+                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
+                    id: relId);
 
-            slideIdList.AppendChild(new P.SlideId { Id = 256 + i, RelationshipId = relId });
+            slideIdList.AppendChild(
+                new P.SlideId
+                {
+                    Id = 256 + i,
+                    RelationshipId = relId
+                });
         }
 
         writer.WritePart(
@@ -503,7 +617,11 @@ public class ForwardOnlyBenchmarks
             "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
             new P.Presentation(
                 slideIdList,
-                new P.SlideSize { Cx = 9144000, Cy = 6858000 }),
+                new P.SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                }),
             slideRels);
     }
 
@@ -524,34 +642,53 @@ public class ForwardOnlyBenchmarks
 
             for (var j = 0; j < 5; j++)
             {
-                shapeTree.AppendChild(new P.Shape(
-                    new P.NonVisualShapeProperties(
-                        new P.NonVisualDrawingProperties { Id = (uint)(j + 1), Name = "Shape " + j },
-                        new P.NonVisualShapeDrawingProperties(),
-                        new P.ApplicationNonVisualDrawingProperties()),
-                    new P.ShapeProperties(
-                        new DocumentFormat.OpenXml.Drawing.Transform2D(
-                            new DocumentFormat.OpenXml.Drawing.Offset { X = j * 1000000L, Y = 1000000L },
-                            new DocumentFormat.OpenXml.Drawing.Extents { Cx = 900000L, Cy = 500000L })),
-                    new P.TextBody(
-                        new DocumentFormat.OpenXml.Drawing.BodyProperties(),
-                        new DocumentFormat.OpenXml.Drawing.Paragraph(
-                            new DocumentFormat.OpenXml.Drawing.Run(
-                                new DocumentFormat.OpenXml.Drawing.Text("Shape " + j + " on Slide " + (i + 1)))))));
+                shapeTree.AppendChild(
+                    new P.Shape(
+                        new P.NonVisualShapeProperties(
+                            new P.NonVisualDrawingProperties
+                            {
+                                Id = (uint)(j + 1),
+                                Name = "Shape " + j
+                            },
+                            new P.NonVisualShapeDrawingProperties(),
+                            new P.ApplicationNonVisualDrawingProperties()),
+                        new P.ShapeProperties(
+                            new DocumentFormat.OpenXml.Drawing.Transform2D(
+                                new DocumentFormat.OpenXml.Drawing.Offset
+                                {
+                                    X = j * 1000000L,
+                                    Y = 1000000L
+                                },
+                                new DocumentFormat.OpenXml.Drawing.Extents
+                                {
+                                    Cx = 900000L,
+                                    Cy = 500000L
+                                })),
+                        new P.TextBody(
+                            new DocumentFormat.OpenXml.Drawing.BodyProperties(),
+                            new DocumentFormat.OpenXml.Drawing.Paragraph(
+                                new DocumentFormat.OpenXml.Drawing.Run(
+                                    new DocumentFormat.OpenXml.Drawing.Text("Shape " + j + " on Slide " + (i + 1)))))));
             }
 
-            slidePart.Slide = new P.Slide(new P.CommonSlideData(shapeTree));
+            slidePart.Slide = new(new P.CommonSlideData(shapeTree));
 
-            slideIdList.AppendChild(new P.SlideId
-            {
-                Id = 256 + i,
-                RelationshipId = presentationPart.GetIdOfPart(slidePart),
-            });
+            slideIdList.AppendChild(
+                new P.SlideId
+                {
+                    Id = 256 + i,
+                    RelationshipId = presentationPart.GetIdOfPart(slidePart),
+                });
         }
 
-        presentationPart.Presentation = new P.Presentation(
-            slideIdList,
-            new P.SlideSize { Cx = 9144000, Cy = 6858000 });
+        presentationPart.Presentation =
+            new(
+                slideIdList,
+                new P.SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                });
     }
 
     [Benchmark]
@@ -571,20 +708,33 @@ public class ForwardOnlyBenchmarks
 
             for (var j = 0; j < 5; j++)
             {
-                shapeTree.AppendChild(new P.Shape(
-                    new P.NonVisualShapeProperties(
-                        new P.NonVisualDrawingProperties { Id = (uint)(j + 1), Name = "Shape " + j },
-                        new P.NonVisualShapeDrawingProperties(),
-                        new P.ApplicationNonVisualDrawingProperties()),
-                    new P.ShapeProperties(
-                        new DocumentFormat.OpenXml.Drawing.Transform2D(
-                            new DocumentFormat.OpenXml.Drawing.Offset { X = j * 1000000L, Y = 1000000L },
-                            new DocumentFormat.OpenXml.Drawing.Extents { Cx = 900000L, Cy = 500000L })),
-                    new P.TextBody(
-                        new DocumentFormat.OpenXml.Drawing.BodyProperties(),
-                        new DocumentFormat.OpenXml.Drawing.Paragraph(
-                            new DocumentFormat.OpenXml.Drawing.Run(
-                                new DocumentFormat.OpenXml.Drawing.Text("Shape " + j + " on Slide " + (i + 1)))))));
+                shapeTree.AppendChild(
+                    new P.Shape(
+                        new P.NonVisualShapeProperties(
+                            new P.NonVisualDrawingProperties
+                            {
+                                Id = (uint)(j + 1),
+                                Name = "Shape " + j
+                            },
+                            new P.NonVisualShapeDrawingProperties(),
+                            new P.ApplicationNonVisualDrawingProperties()),
+                        new P.ShapeProperties(
+                            new DocumentFormat.OpenXml.Drawing.Transform2D(
+                                new DocumentFormat.OpenXml.Drawing.Offset
+                                {
+                                    X = j * 1000000L,
+                                    Y = 1000000L
+                                },
+                                new DocumentFormat.OpenXml.Drawing.Extents
+                                {
+                                    Cx = 900000L,
+                                    Cy = 500000L
+                                })),
+                        new P.TextBody(
+                            new DocumentFormat.OpenXml.Drawing.BodyProperties(),
+                            new DocumentFormat.OpenXml.Drawing.Paragraph(
+                                new DocumentFormat.OpenXml.Drawing.Run(
+                                    new DocumentFormat.OpenXml.Drawing.Text("Shape " + j + " on Slide " + (i + 1)))))));
             }
 
             writer.WritePart(
@@ -592,12 +742,18 @@ public class ForwardOnlyBenchmarks
                 "application/vnd.openxmlformats-officedocument.presentationml.slide+xml",
                 new P.Slide(new P.CommonSlideData(shapeTree)));
 
-            slideRels[i] = new PartRelationship(
-                new("slides/slide" + (i + 1) + ".xml", UriKind.Relative),
-                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
-                id: relId);
+            slideRels[i] =
+                new(
+                    new("slides/slide" + (i + 1) + ".xml", UriKind.Relative),
+                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
+                    id: relId);
 
-            slideIdList.AppendChild(new P.SlideId { Id = 256 + i, RelationshipId = relId });
+            slideIdList.AppendChild(
+                new P.SlideId
+                {
+                    Id = 256 + i,
+                    RelationshipId = relId
+                });
         }
 
         writer.WritePart(
@@ -605,7 +761,11 @@ public class ForwardOnlyBenchmarks
             "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
             new P.Presentation(
                 slideIdList,
-                new P.SlideSize { Cx = 9144000, Cy = 6858000 }),
+                new P.SlideSize
+                {
+                    Cx = 9144000,
+                    Cy = 6858000
+                }),
             slideRels);
     }
 }

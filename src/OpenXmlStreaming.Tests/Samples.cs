@@ -82,7 +82,8 @@ public class Samples
             new("/xl/workbook.xml", UriKind.Relative),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
             new S.Workbook(
-                new S.Sheets(new S.Sheet
+                new S.Sheets(
+                    new S.Sheet
                 {
                     Name = "Sheet1",
                     SheetId = 1,
@@ -212,6 +213,47 @@ public class Samples
             stream,
             leaveOpen: true,
             bufferSize: 1024 * 1024); // 1 MB
+        // end-snippet
+    }
+
+    [Test]
+    public async Task FlushBetweenParts()
+    {
+        using var stream = new MemoryStream();
+
+        await using var writer = StreamingDocument.CreateSpreadsheet(
+            stream,
+            SpreadsheetDocumentType.Workbook,
+            leaveOpen: true);
+
+        // begin-snippet: flush-async
+        // Write the worksheet, then push its bytes to the target stream
+        // asynchronously before moving on to the next part. Useful at part
+        // boundaries against remote sinks — the thread isn't blocked on
+        // network I/O while the next part is being serialized.
+        writer.WritePart(
+            new("/xl/worksheets/sheet1.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
+            new S.Worksheet(new S.SheetData()));
+
+        await writer.FlushAsync();
+
+        writer.WritePart(
+            new("/xl/workbook.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
+            new S.Workbook(
+                new S.Sheets(new S.Sheet
+                {
+                    Name = "Sheet1",
+                    SheetId = 1,
+                    Id = "rId1"
+                })),
+            [
+                new(
+                    new("worksheets/sheet1.xml", UriKind.Relative),
+                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
+                    id: "rId1"),
+            ]);
         // end-snippet
     }
 }

@@ -14,7 +14,8 @@ internal static class IoScenarioContent
 
         for (var i = 0; i < LargeWordParagraphs; i++)
         {
-            body.AppendChild(new Paragraph(
+            body.AppendChild(
+                new Paragraph(
                 new ParagraphProperties(
                     new ParagraphStyleId { Val = "Heading1" }),
                 new W.Run(
@@ -40,9 +41,10 @@ internal static class IoScenarioContent
 
             for (var c = 0; c < LargeSpreadsheetCols; c++)
             {
-                row.AppendChild(new Cell
+                row.AppendChild(
+                    new Cell
                 {
-                    CellValue = new CellValue(((r * LargeSpreadsheetCols) + (uint)c).ToString()),
+                    CellValue = new((r * LargeSpreadsheetCols + (uint)c).ToString()),
                     DataType = CellValues.Number,
                 });
             }
@@ -59,10 +61,13 @@ internal static class IoScenarioContent
 
         var workbookPart = doc.AddWorkbookPart();
         var sheetPart = workbookPart.AddNewPart<WorksheetPart>();
-        sheetPart.Worksheet = new Worksheet(BuildLargeSheetData());
-        workbookPart.Workbook = new Workbook(
+        sheetPart.Worksheet = new(BuildLargeSheetData());
+        workbookPart.Workbook = new(
             new Sheets(
-                new Sheet { Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart) }));
+                new Sheet
+                {
+                    Name = "Sheet1", SheetId = 1, Id = workbookPart.GetIdOfPart(sheetPart)
+                }));
     }
 
     public static void WriteSpreadsheetForwardOnly(Stream target)
@@ -79,7 +84,12 @@ internal static class IoScenarioContent
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
             new Workbook(
                 new Sheets(
-                    new Sheet { Name = "Sheet1", SheetId = 1, Id = "rId1" })),
+                    new Sheet
+                    {
+                        Name = "Sheet1",
+                        SheetId = 1,
+                        Id = "rId1"
+                    })),
             [
                 new(
                     new("worksheets/sheet1.xml", UriKind.Relative),
@@ -91,7 +101,7 @@ internal static class IoScenarioContent
     public static void WriteWordStandard(Stream target)
     {
         using var doc = WordprocessingDocument.Create(target, WordprocessingDocumentType.Document);
-        doc.AddMainDocumentPart().Document = new Document(BuildLargeWordBody());
+        doc.AddMainDocumentPart().Document = new(BuildLargeWordBody());
     }
 
     public static void WriteWordForwardOnly(Stream target)
