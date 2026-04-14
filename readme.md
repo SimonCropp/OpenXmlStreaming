@@ -235,6 +235,57 @@ writer.WritePart(
 The writer works against any writable stream. This makes it suitable for writing straight to an HTTP response, compressed streams, or pipelines — no `MemoryStream` buffering required.
 
 
+### Async disposal and remote sinks
+
+For remote sinks where per-write network latency dominates — SQL BLOB streams, cloud upload streams, HTTP response bodies — use `await using` so the final flush goes through the async path:
+
+<!-- snippet: async-usage -->
+<a id='snippet-async-usage'></a>
+```cs
+await using var writer = StreamingDocument.CreateWord(
+    stream,
+    WordprocessingDocumentType.Document,
+    leaveOpen: true);
+
+writer.WritePart(
+    new("/word/document.xml", UriKind.Relative),
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+    new Document(new Body(new Paragraph(new Run(new Text("Streamed async!"))))));
+
+// DisposeAsync (triggered by `await using`) asynchronously flushes
+// the final buffer — including the ZIP central directory — so remote
+// sinks like SQL BLOB streams don't block the thread on network I/O.
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L185-L199' title='Snippet source file'>snippet source</a> | <a href='#snippet-async-usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Internally the writer wraps the target stream in a fixed-size buffer (default 80 KB). `ZipArchive` writes into the buffer synchronously as parts are produced; the buffer only hits the target stream when it fills, which batches many small deflate writes into a few larger ones. On `DisposeAsync`, the final buffer — which always contains the ZIP central directory and any trailing metadata — is pushed to the target via `Stream.WriteAsync`, so the calling thread is not blocked on the final network write.
+
+The buffer size is configurable per writer. Pick a size matching your sink's preferred chunk size (SQL Server Large Value streams, Azure Blob block size, etc.):
+
+<!-- snippet: custom-buffer-size -->
+<a id='snippet-custom-buffer-size'></a>
+```cs
+// Bigger buffer = fewer, larger writes hit the sink — good for
+// remote streams where per-write overhead is high. Pass 0 to
+// disable buffering entirely and write straight to the sink.
+using var writer = new OpenXmlPackageWriter(
+    stream,
+    leaveOpen: true,
+    bufferSize: 1024 * 1024); // 1 MB
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L207-L215' title='Snippet source file'>snippet source</a> | <a href='#snippet-custom-buffer-size' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+`bufferSize: 0` disables buffering and writes directly to the target. This also disables async flushing on `DisposeAsync` — there's nothing left to flush — so use it only when the target is already a local/in-memory stream where the extra copy isn't worth it.
+
+Notes and limitations:
+
+ * **XML serialization is synchronous.** `DocumentFormat.OpenXml`'s `OpenXmlElement.WriteTo(XmlWriter)` and `OpenXmlWriter` APIs are sync-only, and `ZipArchive` in Create mode calls sync `Write` on its underlying stream. The async surface exists at the writer's boundary — it cannot make the per-element serialization itself async.
+ * **Intermediate writes may still be synchronous.** `ZipArchive` calls `Flush()` on its target stream at a few points, which drains the buffer synchronously. The async guarantee covers the final flush during `DisposeAsync`, not every write.
+ * **Sync `Dispose` still works.** Calling `Dispose()` (or letting a `using` block dispose the writer) flushes the final buffer synchronously. Only switch to `await using` when you actually want the async flush behaviour.
+
+
 ### Finalization
 
 `Finish` writes `_rels/.rels` and `[Content_Types].xml`. It is called automatically by `Dispose`/`DisposeAsync`, but can be called explicitly if you need to flush before disposing.

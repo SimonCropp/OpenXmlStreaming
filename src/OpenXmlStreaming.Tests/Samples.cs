@@ -176,4 +176,42 @@ public class Samples
 
         _ = relationship;
     }
+
+    [Test]
+    public async Task AsyncUsage()
+    {
+        using var stream = new MemoryStream();
+
+        // begin-snippet: async-usage
+        await using var writer = StreamingDocument.CreateWord(
+            stream,
+            WordprocessingDocumentType.Document,
+            leaveOpen: true);
+
+        writer.WritePart(
+            new("/word/document.xml", UriKind.Relative),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+            new Document(new Body(new Paragraph(new Run(new Text("Streamed async!"))))));
+
+        // DisposeAsync (triggered by `await using`) asynchronously flushes
+        // the final buffer — including the ZIP central directory — so remote
+        // sinks like SQL BLOB streams don't block the thread on network I/O.
+        // end-snippet
+    }
+
+    [Test]
+    public void CustomBufferSize()
+    {
+        using var stream = new MemoryStream();
+
+        // begin-snippet: custom-buffer-size
+        // Bigger buffer = fewer, larger writes hit the sink — good for
+        // remote streams where per-write overhead is high. Pass 0 to
+        // disable buffering entirely and write straight to the sink.
+        using var writer = new OpenXmlPackageWriter(
+            stream,
+            leaveOpen: true,
+            bufferSize: 1024 * 1024); // 1 MB
+        // end-snippet
+    }
 }

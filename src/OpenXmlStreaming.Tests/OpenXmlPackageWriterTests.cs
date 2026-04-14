@@ -474,6 +474,160 @@ public class OpenXmlPackageWriterTests
     }
 
     [Test]
+    public async Task DisposeAsync_FlushesFinalBufferAsynchronously()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true))
+        {
+            writer.AddRelationship(
+                new("/word/document.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+                "rId1");
+
+            writer.WritePart(
+                new("/word/document.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+                new Document(new Body(new Paragraph(new Run(new Text("Async!"))))));
+        }
+
+        // DisposeAsync must flush the tail of the buffer (at minimum the ZIP
+        // central directory) via WriteAsync — that's the whole point of the
+        // async surface. ZipArchive may also trigger some intermediate sync
+        // flushes via Flush() calls, so we don't assert SyncWriteCalls == 0.
+        Assert.Multiple(() =>
+        {
+            Assert.That(tracker.AsyncWriteCalls, Is.GreaterThanOrEqualTo(1),
+                "DisposeAsync should flush via WriteAsync at least once");
+            Assert.That(tracker.TotalBytesWritten, Is.GreaterThan(0));
+        });
+
+        ms.Position = 0;
+        using var doc = WordprocessingDocument.Open(ms, false);
+        Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Async!"));
+    }
+
+    [Test]
+    public void Dispose_FlushesFinalBufferSynchronously()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true))
+        {
+            writer.AddRelationship(
+                new("/word/document.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+                "rId1");
+
+            writer.WritePart(
+                new("/word/document.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+                new Document(new Body(new Paragraph(new Run(new Text("Sync!"))))));
+        }
+
+        // Sync disposal routes the final flush through sync Write.
+        Assert.Multiple(() =>
+        {
+            Assert.That(tracker.SyncWriteCalls, Is.GreaterThanOrEqualTo(1),
+                "Sync Dispose should flush via Write");
+            Assert.That(tracker.AsyncWriteCalls, Is.Zero,
+                "Sync Dispose should not touch the async path");
+        });
+    }
+
+    [Test]
+    public async Task BufferSize_Zero_DisablesBuffering()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 0))
+        {
+            writer.AddRelationship(
+                new("/word/document.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+                "rId1");
+
+            writer.WritePart(
+                new("/word/document.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+                new Document(new Body(new Paragraph(new Run(new Text("Unbuffered!"))))));
+        }
+
+        // With no buffer, every ZipArchive sync write lands directly on the
+        // target, and DisposeAsync has nothing to flush — so no async writes.
+        Assert.Multiple(() =>
+        {
+            Assert.That(tracker.SyncWriteCalls, Is.GreaterThan(0));
+            Assert.That(tracker.AsyncWriteCalls, Is.Zero);
+        });
+
+        ms.Position = 0;
+        using var doc = WordprocessingDocument.Open(ms, false);
+        Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Unbuffered!"));
+    }
+
+    [Test]
+    public async Task BufferSize_Small_SpillsSyncThenAsyncFlush()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        // 64-byte buffer — far smaller than any part's payload — forces
+        // sync spill flushes while ZipArchive is writing, then a final
+        // async flush when DisposeAsync runs.
+        await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true, bufferSize: 64))
+        {
+            writer.AddRelationship(
+                new("/word/document.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+                "rId1");
+
+            writer.WritePart(
+                new("/word/document.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+                new Document(new Body(new Paragraph(new Run(new Text("Spilled!"))))));
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tracker.SyncWriteCalls, Is.GreaterThan(0),
+                "Small buffer should spill sync while writing");
+            Assert.That(tracker.AsyncWriteCalls, Is.GreaterThanOrEqualTo(1),
+                "Final flush during DisposeAsync should still be async");
+        });
+
+        ms.Position = 0;
+        using var doc = WordprocessingDocument.Open(ms, false);
+        Assert.That(doc.MainDocumentPart!.Document!.Body!.InnerText, Is.EqualTo("Spilled!"));
+    }
+
+    [Test]
+    public async Task DisposeAsync_LeaveOpen_DoesNotDisposeUnderlying()
+    {
+        using var ms = new MemoryStream();
+        var tracker = new SyncAsyncTrackingStream(ms);
+
+        await using (var writer = new OpenXmlPackageWriter(tracker, leaveOpen: true))
+        {
+            writer.AddRelationship(
+                new("/word/document.xml", UriKind.Relative),
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
+                "rId1");
+
+            writer.WritePart(
+                new("/word/document.xml", UriKind.Relative),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+                new Document(new Body()));
+        }
+
+        // Must still be writable after async dispose.
+        Assert.DoesNotThrow(() => ms.WriteByte(0));
+    }
+
+    [Test]
     public async Task DisposeAsync_FinalizesPackage()
     {
         using var ms = new MemoryStream();
