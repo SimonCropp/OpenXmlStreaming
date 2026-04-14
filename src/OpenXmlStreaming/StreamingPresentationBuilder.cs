@@ -81,7 +81,7 @@ public sealed class StreamingPresentationBuilder(
     /// Writes <c>ppt/presentation.xml</c> referencing every slide and the slide
     /// master. Called automatically by <see cref="Dispose"/>/<see cref="DisposeAsync"/>.
     /// </summary>
-    internal void Finish()
+    void Finish()
     {
         if (finished)
         {
