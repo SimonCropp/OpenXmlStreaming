@@ -143,4 +143,37 @@ public class Samples
             new P.Presentation(new P.SlideIdList()));
         // end-snippet
     }
+
+    [Test]
+    public void ConstructionVariants()
+    {
+        using var stream = new MemoryStream();
+
+        // begin-snippet: construction-variants
+        // Direct construction
+        using var direct = new OpenXmlPackageWriter(stream, leaveOpen: true);
+
+        // Typed factories (pre-register the officeDocument relationship)
+        using var word = StreamingDocument.CreateWord(
+            stream, WordprocessingDocumentType.Document, leaveOpen: true);
+        using var spreadsheet = StreamingDocument.CreateSpreadsheet(
+            stream, SpreadsheetDocumentType.Workbook, leaveOpen: true);
+        using var presentation = StreamingDocument.CreatePresentation(
+            stream, PresentationDocumentType.Presentation, leaveOpen: true);
+        // end-snippet
+    }
+
+    [Test]
+    public void PartRelationshipStruct()
+    {
+        // begin-snippet: part-relationship-struct
+        var relationship = new PartRelationship(
+            targetUri: new("styles.xml", UriKind.Relative),
+            relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+            targetMode: TargetMode.Internal, // default
+            id: "rId1"); // optional, auto-generated if null
+        // end-snippet
+
+        _ = relationship;
+    }
 }

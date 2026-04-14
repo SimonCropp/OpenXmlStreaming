@@ -16,6 +16,88 @@ https://nuget.org/packages/OpenXmlStreaming/
 `DocumentFormat.OpenXml` and `System.IO.Packaging` require a seekable stream because the underlying ZIP writer patches headers in place. That forces callers to either buffer the full package to a `MemoryStream` before flushing it to the network, or write to a temporary file. `OpenXmlStreaming` uses `ZipArchive` in `Create` mode, which emits ZIP data descriptors instead of back-patching, allowing true forward-only output.
 
 
+## When to use
+
+ * Writing documents to HTTP response streams (`HttpResponse.Body`)
+ * Writing to network streams or cloud storage upload streams
+ * Generating large documents where you want to avoid buffering the entire package in memory
+ * Any scenario where the target stream is not seekable
+
+
+## Comparison with the standard `DocumentFormat.OpenXml` API
+
+| | Standard `XxxDocument.Create` | `OpenXmlPackageWriter` |
+|---|---|---|
+| Requires seekable stream | Yes | No |
+| Requires `MemoryStream` buffer | Often | Never |
+| Can modify parts after writing | Yes | No |
+| Can read parts | Yes | No |
+| DOM support | Full | Write-only |
+| `OpenXmlWriter` support | Yes | Yes |
+| Memory usage for large docs | Higher | Lower |
+
+
+## Key behaviours
+
+ * **Only one part can be open at a time.** Creating a new part auto-closes the previous one.
+ * **Parts cannot be modified after writing.** This is a forward-only writer.
+ * **Content types and package relationships are written last** (during `Finish`/`Dispose`), so they capture all parts that were written.
+ * **The destination stream does not need to be seekable.** The writer uses `ZipArchive` in `Create` mode and emits ZIP data descriptors.
+ * **`Dispose`/`DisposeAsync` finalizes the package.** You do not need to call `Finish` explicitly.
+
+
+## Core API
+
+### `OpenXmlPackageWriter`
+
+The main writer class. Constructed directly, or via a typed factory that pre-registers the main part relationship.
+
+<!-- snippet: construction-variants -->
+<a id='snippet-construction-variants'></a>
+```cs
+// Direct construction
+using var direct = new OpenXmlPackageWriter(stream, leaveOpen: true);
+
+// Typed factories (pre-register the officeDocument relationship)
+using var word = StreamingDocument.CreateWord(
+    stream, WordprocessingDocumentType.Document, leaveOpen: true);
+using var spreadsheet = StreamingDocument.CreateSpreadsheet(
+    stream, SpreadsheetDocumentType.Workbook, leaveOpen: true);
+using var presentation = StreamingDocument.CreatePresentation(
+    stream, PresentationDocumentType.Presentation, leaveOpen: true);
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L152-L163' title='Snippet source file'>snippet source</a> | <a href='#snippet-construction-variants' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+| Method | Description |
+|---|---|
+| `AddRelationship(partUri, relationshipType, id?)` | Adds a package-level relationship (written to `_rels/.rels`) |
+| `CreatePart(partUri, contentType)` | Creates a part and returns an `OpenXmlPartEntry` for streaming writes |
+| `WritePart(partUri, contentType, rootElement, relationships?)` | One-shot: writes an element tree as a complete part |
+| `Finish()` | Finalizes the package (writes content types and relationships) |
+| `Dispose()` / `DisposeAsync()` | Calls `Finish` if needed, then closes the underlying ZIP |
+
+### `OpenXmlPartEntry`
+
+Returned by `CreatePart`. Exposes the part's output `Stream` and an `AddRelationship` method for part-level relationships written to the matching `*.rels` file when the entry is disposed.
+
+### `PartRelationship`
+
+A struct passed to `WritePart` to declare part-level relationships inline:
+
+<!-- snippet: part-relationship-struct -->
+<a id='snippet-part-relationship-struct'></a>
+```cs
+var relationship = new PartRelationship(
+    targetUri: new("styles.xml", UriKind.Relative),
+    relationshipType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+    targetMode: TargetMode.Internal, // default
+    id: "rId1"); // optional, auto-generated if null
+```
+<sup><a href='/src/OpenXmlStreaming.Tests/Samples.cs#L169-L175' title='Snippet source file'>snippet source</a> | <a href='#snippet-part-relationship-struct' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+
 ## Usage
 
 ### Minimal Word document
@@ -156,6 +238,74 @@ The writer works against any writable stream. This makes it suitable for writing
 ### Finalization
 
 `Finish` writes `_rels/.rels` and `[Content_Types].xml`. It is called automatically by `Dispose`/`DisposeAsync`, but can be called explicitly if you need to flush before disposing.
+
+
+## Benchmarks
+
+Measured on .NET 10.0 with `BenchmarkDotNet` + `MemoryDiagnoser`. Source in [`src/OpenXmlStreaming.Benchmarks`](/src/OpenXmlStreaming.Benchmarks). Run with:
+
+```
+dotnet run -c Release --project src/OpenXmlStreaming.Benchmarks -- --filter "*"
+```
+
+### Writer overhead (`ForwardOnlyBenchmarks`)
+
+Writes each document to a discarding stream so the numbers reflect the writer's own CPU and allocation cost, not the cost of the sink. Each row is a pair of two benchmarks — standard `XxxDocument.Create` vs `StreamingDocument.CreateXxx` — with per-pair deltas computed manually.
+
+#### Word
+
+| Scenario | Approach | Mean | Allocated | Δ time | Δ alloc |
+|---|---|---:|---:|---:|---:|
+| Simple (1 paragraph) | Standard | 28.0 µs | 54 KB | | |
+| | ForwardOnly | 31.3 µs | 27 KB | +12% | **-50%** |
+| Medium (20 paragraphs) | Standard | 78.6 µs | 81 KB | | |
+| | ForwardOnly | 59.8 µs | 53 KB | -24% | -35% |
+| Complex (100 paragraphs + styles) | Standard | 543 µs | 367 KB | | |
+| | ForwardOnly | 324 µs | 288 KB | **-40%** | -22% |
+
+#### Spreadsheet
+
+| Scenario | Approach | Mean | Allocated | Δ time | Δ alloc |
+|---|---|---:|---:|---:|---:|
+| Simple (1 sheet, 1 row) | Standard | 80.3 µs | 84 KB | | |
+| | ForwardOnly | 55.3 µs | 46 KB | -31% | -46% |
+| Medium (100 rows × 10 cols) | Standard | 786 µs | 810 KB | | |
+| | ForwardOnly | 707 µs | 681 KB | -10% | -16% |
+| Complex (3 sheets × 500 rows × 10 cols) | Standard | 19.8 ms | 10.7 MB | | |
+| | ForwardOnly | 11.3 ms | 9.5 MB | **-43%** | -11% |
+
+#### Presentation
+
+| Scenario | Approach | Mean | Allocated | Δ time | Δ alloc |
+|---|---|---:|---:|---:|---:|
+| Simple (1 slide) | Standard | 118 µs | 85 KB | | |
+| | ForwardOnly | 54.9 µs | 46 KB | **-54%** | -46% |
+| Medium (10 slides) | Standard | 304 µs | 283 KB | | |
+| | ForwardOnly | 194 µs | 160 KB | -36% | -43% |
+| Complex (30 slides × 5 shapes) | Standard | 1.58 ms | 1.21 MB | | |
+| | ForwardOnly | 1.29 ms | 829 KB | -18% | -31% |
+
+### I/O scenarios (`IoScenarioBenchmarks`)
+
+Real sinks with a large document (2,000 paragraphs for Word, 10,000 rows × 10 cols for Spreadsheet). The `Standard` path for a non-seekable sink models the idiomatic workaround: build the package into a `MemoryStream`, then `CopyTo` the destination.
+
+| Sink | Document | Approach | Mean | Allocated | Δ time | Δ alloc |
+|---|---|---|---:|---:|---:|---:|
+| Non-seekable | Word | Standard | 9.3 ms | 6.40 MB | | |
+| | | ForwardOnly | 6.8 ms | 4.86 MB | **-27%** | -24% |
+| Non-seekable | Spreadsheet | Standard | 190 ms | 75.89 MB | | |
+| | | ForwardOnly | 181 ms | 63.35 MB | -5% | -17% |
+| File (disk) | Word | Standard | 27.0 ms | 6.38 MB | | |
+| | | ForwardOnly | 17.9 ms | 4.86 MB | **-33%** | -24% |
+| File (disk) | Spreadsheet | Standard | 156.9 ms | 75.39 MB | | |
+| | | ForwardOnly | 148.5 ms | 63.35 MB | -5% | -16% |
+
+### Takeaways
+
+ * **Allocation savings are consistent across every scenario** — the streaming writer avoids the `MemoryStream` buffer and the SDK's package-management overhead, saving 11-50% depending on document size and shape.
+ * **Biggest time wins are on small-to-medium documents** (Word, Presentation) where the SDK's per-package fixed cost dominates. Writer overhead is up to 54% lower.
+ * **On huge element trees (100K+ cells) the time delta narrows** to ~5-10%. The cost of constructing the tree itself dominates, and the saved MemoryStream buffer is a smaller fraction of total work — but the memory savings remain proportional.
+ * **One case is roughly neutral on time**: writing a single trivial paragraph to a Word document. Writer overhead is comparable to the SDK's — but allocations are still halved.
 
 
 ## Icon
