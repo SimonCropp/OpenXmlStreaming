@@ -18,9 +18,6 @@ dotnet test src/OpenXmlStreaming.Tests/OpenXmlStreaming.Tests.csproj
 # A single test / class / keyword
 dotnet test src/OpenXmlStreaming.Tests/OpenXmlStreaming.Tests.csproj --filter "FullyQualifiedName~MigrationGuide.WordStreaming"
 
-# Running tests without auto-launching the Verify diff tool (CI-style)
-DiffEngine_Disabled=true dotnet test src/OpenXmlStreaming.Tests/OpenXmlStreaming.Tests.csproj
-
 # Benchmarks (default BDN job — publishable, slow)
 dotnet run -c Release --project src/OpenXmlStreaming.Benchmarks -- --filter "*"
 
