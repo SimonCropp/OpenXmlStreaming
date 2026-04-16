@@ -4,7 +4,7 @@ public static class ModuleInitializer
     public static void Init()
     {
         VerifyDiffPlex.Initialize(OutputType.Compact);
-        VerifyImageSharp.Initialize(ssimThreshold: 0.999);
+        VerifierSettings.UseSsimForPng(threshold: 0.999);
         VerifierSettings.InitializePlugins();
     }
 }
